@@ -1,0 +1,24 @@
+<odoo>
+
+    <record id="seq_fund_incoming"
+            model="ir.sequence">
+
+        <field name="name">
+            Fund Incoming
+        </field>
+
+        <field name="code">
+            fund.incoming
+        </field>
+
+        <field name="prefix">
+            Fund-No/
+        </field>
+
+        <field name="padding">
+            5
+        </field>
+
+    </record>
+
+</odoo>

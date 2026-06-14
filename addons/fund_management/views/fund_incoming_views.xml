@@ -1,0 +1,73 @@
+<odoo>
+
+    <!-- TREE VIEW -->
+    <record id="view_fund_incoming_tree" model="ir.ui.view">
+        <field name="name">fund.incoming.tree</field>
+        <field name="model">fund.incoming</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="fund_account_id"/>
+                <field name="amount"/>
+                <field name="transaction_reference"/>
+                <field name="source"/>
+                <field name="state"/>
+                <field name="date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="view_fund_incoming_form" model="ir.ui.view">
+        <field name="name">fund.incoming.form</field>
+        <field name="model">fund.incoming</field>
+        <field name="arch" type="xml">
+            <form>
+
+                <header>
+                    <button name="action_confirm"
+                            type="object"
+                            string="Confirm"
+                            class="btn-primary"
+                            states="draft"/>
+
+                    <button name="action_cancel"
+                            type="object"
+                            string="Reject"
+                            class="btn-danger"
+                            states="draft,confirmed"/>
+
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="fund_account_id"/>
+                        <field name="amount"/>
+                        <field name="transaction_reference"/>
+                        <field name="source"/>
+                        <field name="date"/>
+                        <field name="company_id"/>
+                    </group>
+
+                    <group>
+                        <field name="description"/>
+                        <field name="attachment" filename="attachment_name"/>
+                    </group>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_fund_incoming" model="ir.actions.act_window">
+        <field name="name">Incoming Funds</field>
+        <field name="res_model">fund.incoming</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

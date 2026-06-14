@@ -1,0 +1,101 @@
+# -----------------------------
+# Odoo / Python project .gitignore
+# -----------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.env/
+venv.bak/
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+
+# MyPy / lint caches
+.mypy_cache/
+.ruff_cache/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Swap files
+*.swp
+*~
+*.bak
+
+# Logs and runtime files
+*.log
+logs/
+odoo.log
+*.pid
+*.sock
+
+# Secrets / environment files
+.env
+.env.*
+credentials.ini
+secrets.yaml
+*.pem
+*.key
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated static assets / bundles
+dist/
+build/
+
+# Python tooling
+.tox/
+htmlcov/
+
+# Odoo specific
+# filestore and attachments (commonly large binary data stored outside DB)
+filestore/
+.*__pycache__/
+
+# PostgreSQL data directories (very large, should not be in repo)
+postgresql/
+pgdata/
+
+
+.env
+
+# Misc
+*.sqlite3
+
+# Allow the repo's docker-compose.yml and config/odoo.conf to remain tracked by default
+# (If you want to ignore config files, add them explicitly below)
+

@@ -1,0 +1,75 @@
+
+<odoo>
+
+    <!-- TREE VIEW -->
+    <record id="view_fund_account_tree" model="ir.ui.view">
+        <field name="name">fund.account.tree</field>
+        <field name="model">fund.account</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="account_type"/>
+                <field name="account_number"/>
+                <field name="total_received"/>
+                <field name="available_balance"/>
+                <field name="held_balance"/>
+                <field name="assigned_balance"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="view_fund_account_form" model="ir.ui.view">
+        <field name="name">fund.account.form</field>
+        <field name="model">fund.account</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <group>
+                        <field name="name"/>
+                        <field name="account_type"/>
+                        <field name="account_number"/>
+                        <field name="company_id"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- BALANCES -->
+                        <page string="Balances">
+                            <group>
+                                <field name="total_received" readonly="1"/>
+                                <field name="available_balance" readonly="1"/>
+                                <field name="held_balance" readonly="1"/>
+                                <field name="assigned_balance" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <!-- INCOMING FUNDS -->
+                        <page string="Incoming Funds">
+                            <field name="incoming_funds">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="state"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_fund_account" model="ir.actions.act_window">
+        <field name="name">Fund Accounts</field>
+        <field name="res_model">fund.account</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>
+

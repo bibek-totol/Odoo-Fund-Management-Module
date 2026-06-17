@@ -1,0 +1,66 @@
+<odoo>
+    <record id="view_fund_bill_tree" model="ir.ui.view">
+        <field name="name">fund.bill.tree</field>
+        <field name="model">fund.bill</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'confirmed'" decoration-danger="state == 'cancelled'">
+                <field name="name"/>
+                <field name="requisition_id"/>
+                <field name="project_id"/>
+                <field name="expense_head_id"/>
+                <field name="amount"/>
+                <field name="vendor"/>
+                <field name="date"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_fund_bill_form" model="ir.ui.view">
+        <field name="name">fund.bill.form</field>
+        <field name="model">fund.bill</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary" states="draft"/>
+                    <button name="action_cancel" type="object" string="Cancel" states="draft,confirmed"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <!-- Domain ensures only approved requisitions show up -->
+                            <field name="requisition_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('state', '=', 'approved')]"/>
+                            <field name="amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="vendor" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group>
+                            <!-- These are auto-filled from the requisition and cannot be edited -->
+                            <field name="project_id" readonly="1"/>
+                            <field name="expense_head_id" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="attachment" filename="attachment_name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="attachment_name" invisible="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fund_bill" model="ir.actions.act_window">
+        <field name="name">Bills</field>
+        <field name="res_model">fund.bill</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,93 @@
+<odoo>
+    <record id="view_fund_expense_head_tree" model="ir.ui.view">
+        <field name="name">fund.expense.head.tree</field>
+        <field name="model">fund.expense.head</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="total_allocated"/>
+                <field name="available_fund"/>
+                <field name="total_spent"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_fund_expense_head_form" model="ir.ui.view">
+        <field name="name">fund.expense.head.form</field>
+        <field name="model">fund.expense.head</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Balances">
+                            <group>
+                                <group string="Allocations &amp; Transfers">
+                                    <field name="total_allocated" readonly="1"/>
+                                    <field name="incoming_transfers" readonly="1"/>
+                                    <field name="outgoing_transfers" readonly="1"/>
+                                </group>
+                                <group string="Spending">
+                                    <field name="total_spent" readonly="1"/>
+                                    <field name="released_funds" readonly="1"/>
+                                    <field name="approved_unspent" readonly="1"/>
+                                    <field name="available_fund" readonly="1"/>
+                                </group>
+                                <group string="Holds">
+                                    <field name="requisition_hold" readonly="1"/>
+                                    <field name="transfer_hold" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Allocations">
+                            <field name="allocation_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Requisitions">
+                            <field name="requisition_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Bills">
+                            <field name="bill_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fund_expense_head" model="ir.actions.act_window">
+        <field name="name">Expense Heads</field>
+        <field name="res_model">fund.expense.head</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

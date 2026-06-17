@@ -1,0 +1,110 @@
+<odoo>
+    <record id="view_fund_transfer_tree" model="ir.ui.view">
+        <field name="name">fund.transfer.tree</field>
+        <field name="model">fund.transfer</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state in ('submitted','gm_approved')"
+                  decoration-success="state == 'approved'"
+                  decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="from_project_id"/>
+                <field name="from_expense_head_id"/>
+                <field name="to_project_id"/>
+                <field name="to_expense_head_id"/>
+                <field name="amount"/>
+                <field name="state"/>
+                <field name="request_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_fund_transfer_form" model="ir.ui.view">
+        <field name="name">fund.transfer.form</field>
+        <field name="model">fund.transfer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submit"
+                            class="btn-primary" states="draft"/>
+                    <button name="action_gm_approve" type="object" string="GM Approve"
+                            class="btn-primary" states="submitted"/>
+                    <button name="action_md_approve" type="object" string="MD Approve"
+                            class="btn-primary" states="gm_approved"/>
+                    <button name="action_reject" type="object" string="Reject"
+                            class="btn-danger" states="submitted,gm_approved"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            states="draft,submitted,gm_approved"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,gm_approved,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="From (Source)">
+                            <field name="from_project_id"
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('from_expense_head_id', '=', False)]}"/>
+                            <field name="from_expense_head_id"
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('from_project_id', '=', False)]}"/>
+                        </group>
+                        <group string="To (Destination)">
+                            <field name="to_project_id"
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('to_expense_head_id', '=', False)]}"/>
+                            <field name="to_expense_head_id"
+                                   attrs="{'readonly': [('state', '!=', 'draft')],
+                                           'required': [('to_project_id', '=', False)]}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="amount"
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="request_date"
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group>
+                            <field name="requested_by" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason"
+                               attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="attachment" filename="attachment_name"
+                               attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="attachment_name" invisible="1"/>
+                    </group>
+                    <group string="Approval Comment">
+                        <field name="approval_comment"/>
+                    </group>
+                    <notebook>
+                        <page string="Approval History">
+                            <field name="approval_history_ids">
+                                <tree>
+                                    <field name="approver"/>
+                                    <field name="approval_level"/>
+                                    <field name="result"/>
+                                    <field name="date"/>
+                                    <field name="comment"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fund_transfer" model="ir.actions.act_window">
+        <field name="name">Fund Transfers</field>
+        <field name="res_model">fund.transfer</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

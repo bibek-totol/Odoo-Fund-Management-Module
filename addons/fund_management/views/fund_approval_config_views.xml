@@ -1,0 +1,38 @@
+<odoo>
+    <record id="view_fund_approval_config_form" model="ir.ui.view">
+        <field name="name">fund.approval.config.form</field>
+        <field name="model">fund.approval.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="gm_approver_id"/>
+                        <field name="md_approver_id"/>
+                        <field name="allow_self_approval"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fund_approval_config_tree" model="ir.ui.view">
+        <field name="name">fund.approval.config.tree</field>
+        <field name="model">fund.approval.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="gm_approver_id"/>
+                <field name="md_approver_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_fund_approval_config" model="ir.actions.act_window">
+        <field name="name">Approval Settings</field>
+        <field name="res_model">fund.approval.config</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

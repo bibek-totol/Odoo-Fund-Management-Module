@@ -74,8 +74,19 @@ class FundBill(models.Model):
 
             rec.state = 'confirmed'
 
+
+
+               
+    
     def action_cancel(self):
         for rec in self:
             if rec.state == 'confirmed' and rec.requisition_id.state == 'closed':
                 raise UserError(_('You cannot cancel a bill against a closed requisition. Reopen the requisition first.'))
             rec.state = 'cancelled'
+
+   
+    def unlink(self):
+        for rec in self:
+            if rec.state == 'confirmed':
+                raise UserError(_('You cannot delete a confirmed bill. Cancel it instead.'))
+        return super().unlink()

@@ -25,26 +25,34 @@ Main Features:
 
 """,
 
-
     'author': "NN Services & Engineering Ltd.",
     'website': "https://www.nnsel.com/",
 
-    
-    'category': 'Uncategorized',
+    'category': 'Accounting',
     'version': '0.1',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base'],
+    'depends': ['base', 'mail'],
 
-    # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'security/fund_security.xml',
+        'security/ir.model.access.csv',
+        'data/sequence.xml',
+        'views/fund_account_views.xml',
+        'views/fund_project_views.xml',
+        'views/fund_expense_head_views.xml',
+        'views/fund_incoming_views.xml',
+        'views/fund_allocation_views.xml',
+        'views/fund_requisition_views.xml',
+        'views/fund_bill_views.xml',
+        'views/fund_transfer_views.xml',
+        'views/fund_approval_config_views.xml',
+        'views/menus/fund_menus.xml',
     ],
-    # only loaded in demonstration mode
+
     'demo': [
         'demo/demo.xml',
     ],
-}
 
+    'installable': True,
+    'application': True,
+}

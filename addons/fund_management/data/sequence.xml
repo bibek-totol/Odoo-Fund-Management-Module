@@ -1,24 +1,38 @@
 <odoo>
 
-    <record id="seq_fund_incoming"
-            model="ir.sequence">
+    <record id="seq_fund_incoming" model="ir.sequence">
+        <field name="name">Fund Incoming</field>
+        <field name="code">fund.incoming</field>
+        <field name="prefix">FIN/</field>
+        <field name="padding">5</field>
+    </record>
 
-        <field name="name">
-            Fund Incoming
-        </field>
+    <record id="seq_fund_allocation" model="ir.sequence">
+        <field name="name">Fund Allocation</field>
+        <field name="code">fund.allocation</field>
+        <field name="prefix">FAL/</field>
+        <field name="padding">5</field>
+    </record>
 
-        <field name="code">
-            fund.incoming
-        </field>
+    <record id="seq_fund_requisition" model="ir.sequence">
+        <field name="name">Fund Requisition</field>
+        <field name="code">fund.requisition</field>
+        <field name="prefix">FREQ/</field>
+        <field name="padding">5</field>
+    </record>
 
-        <field name="prefix">
-            Fund-No/
-        </field>
+    <record id="seq_fund_bill" model="ir.sequence">
+        <field name="name">Fund Bill</field>
+        <field name="code">fund.bill</field>
+        <field name="prefix">FBIL/</field>
+        <field name="padding">5</field>
+    </record>
 
-        <field name="padding">
-            5
-        </field>
-
+    <record id="seq_fund_transfer" model="ir.sequence">
+        <field name="name">Fund Transfer</field>
+        <field name="code">fund.transfer</field>
+        <field name="prefix">FTRF/</field>
+        <field name="padding">5</field>
     </record>
 
 </odoo>

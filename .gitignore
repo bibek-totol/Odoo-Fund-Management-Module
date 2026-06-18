@@ -55,6 +55,7 @@ Thumbs.db
 # Logs and runtime files
 *.log
 logs/
+!logs/.gitkeep
 odoo.log
 *.pid
 *.sock
@@ -62,6 +63,7 @@ odoo.log
 # Secrets / environment files
 .env
 .env.*
+!.env.example
 credentials.ini
 secrets.yaml
 *.pem
@@ -89,9 +91,6 @@ filestore/
 # PostgreSQL data directories (very large, should not be in repo)
 postgresql/
 pgdata/
-
-
-.env
 
 # Misc
 *.sqlite3

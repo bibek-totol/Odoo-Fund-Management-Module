@@ -2,6 +2,9 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 
+_REQUISITION_WARN_THRESHOLD = 0.90
+
+
 class FundApprovalMixin(models.AbstractModel):
     _name = 'fund.approval.mixin'
     _description = 'Fund Approval Workflow'
@@ -48,8 +51,7 @@ class FundApprovalMixin(models.AbstractModel):
         return config
 
     def _log_approval(self, level, result, comment='', previous_state='', new_state=''):
-       
-        self.ensure_all()
+        self.ensure_one()
         amount = self.amount if hasattr(self, 'amount') else 0.0
         account_id = self.fund_account_id.id if hasattr(self, 'fund_account_id') and self.fund_account_id else False
         project_id = self.project_id.id if hasattr(self, 'project_id') and self.project_id else False
@@ -71,7 +73,43 @@ class FundApprovalMixin(models.AbstractModel):
             'expense_head_id': expense_id,
             'creator_id': self.create_uid.id,
             'submitted_by_id': self.requested_by.id,
+            'currency_id': self.env.company.currency_id.id,
         })
+
+ 
+
+    def _activity_type_id(self):
+       
+        return self.env.ref('mail.mail_activity_data_todo').id
+
+    def _schedule_activity(self, user_id, summary, note, date_deadline=None):
+        
+        if not self._is_mail_thread():
+            return
+        if date_deadline is None:
+            date_deadline = fields.Date.today()
+        self.activity_schedule(
+            activity_type_id=self._activity_type_id(),
+            summary=summary,
+            note=note,
+            user_id=user_id,
+            date_deadline=date_deadline,
+        )
+
+    def _is_mail_thread(self):
+       
+        return hasattr(self, 'activity_ids')
+
+    def _notify_requester(self, summary, note):
+       
+        self._schedule_activity(self.requested_by.id, summary, note)
+
+    def _notify_approver(self, user, summary, note):
+      
+        if user:
+            self._schedule_activity(user.id, summary, note)
+
+    
 
     def action_submit(self):
         for rec in self:
@@ -82,17 +120,28 @@ class FundApprovalMixin(models.AbstractModel):
             rec.state = 'submitted'
             rec._log_approval('submit', 'submitted', rec.approval_comment or '', old_state, 'submitted')
 
+           
+            config = rec._get_approval_config()
+            doc_label = rec._description or rec._name
+            rec._notify_approver(
+                config.gm_approver_id,
+                summary=_('Approval Required: %s') % rec.name,
+                note=_(
+                    '<b>%s</b> requires your GM approval.<br/>'
+                    'Submitted by: %s<br/>Amount: %s'
+                ) % (doc_label, rec.requested_by.name, getattr(rec, 'amount', '')),
+            )
+
     def action_gm_approve(self):
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted records can be GM-approved.'))
-            
-           
-            if not self.user_has_groups('fund_management.group_gm_approver') and not self.user_has_groups('fund_management.group_fund_admin'):
+
+            if not self.user_has_groups('nn_fund_management.group_gm_approver') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only users in the GM Approver group can approve at this level.'))
 
             config = rec._get_approval_config()
-            if self.env.user != config.gm_approver_id and not self.user_has_groups('fund_management.group_fund_admin'):
+            if self.env.user != config.gm_approver_id and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('You are not the assigned GM approver.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot approve your own request.'))
@@ -102,17 +151,31 @@ class FundApprovalMixin(models.AbstractModel):
             rec.approval_comment = False
             rec.state = 'gm_approved'
 
+           
+            rec._notify_approver(
+                config.md_approver_id,
+                summary=_('MD Approval Required: %s') % rec.name,
+                note=_(
+                    '<b>%s</b> has been GM-approved and now awaits your MD approval.<br/>'
+                    'Requested by: %s'
+                ) % (rec.name, rec.requested_by.name),
+            )
+           
+            rec._notify_requester(
+                summary=_('GM Approved: %s') % rec.name,
+                note=_('Your request <b>%s</b> has been approved by the GM and is pending MD approval.') % rec.name,
+            )
+
     def action_md_approve(self):
         for rec in self:
             if rec.state != 'gm_approved':
                 raise UserError(_('GM approval must be completed before MD approval.'))
-            
-           
-            if not self.user_has_groups('fund_management.group_md_approver') and not self.user_has_groups('fund_management.group_fund_admin'):
+
+            if not self.user_has_groups('nn_fund_management.group_md_approver') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only users in the MD Approver group can approve at this level.'))
 
             config = rec._get_approval_config()
-            if self.env.user != config.md_approver_id and not self.user_has_groups('fund_management.group_fund_admin'):
+            if self.env.user != config.md_approver_id and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('You are not the assigned MD approver.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot approve your own request.'))
@@ -123,18 +186,24 @@ class FundApprovalMixin(models.AbstractModel):
             rec.state = 'approved'
             rec._on_approved()
 
+           
+            rec._notify_requester(
+                summary=_('Approved: %s') % rec.name,
+                note=_('Your request <b>%s</b> has been fully approved (GM + MD).') % rec.name,
+            )
+
     def action_reject(self):
         for rec in self:
             if rec.state not in ('submitted', 'gm_approved'):
                 raise UserError(_('Only pending records can be rejected.'))
-            
+
             config = rec._get_approval_config()
             if rec.state == 'submitted':
                 level, approver = 'gm', config.gm_approver_id
             else:
                 level, approver = 'md', config.md_approver_id
 
-            if self.env.user != approver and not self.user_has_groups('fund_management.group_fund_admin'):
+            if self.env.user != approver and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only the current-level approver can reject.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot reject your own request.'))
@@ -145,26 +214,36 @@ class FundApprovalMixin(models.AbstractModel):
             rec.state = 'rejected'
             rec._on_rejected()
 
+           
+            level_label = _('GM') if level == 'gm' else _('MD')
+            rec._notify_requester(
+                summary=_('Rejected: %s') % rec.name,
+                note=_(
+                    'Your request <b>%s</b> was rejected at the <b>%s</b> level.<br/>'
+                    'Comment: %s'
+                ) % (rec.name, level_label, rec.approval_comment or _('No comment provided.')),
+            )
+
     def action_cancel(self):
         for rec in self:
             if rec.state not in ('draft', 'submitted', 'gm_approved', 'approved'):
                 raise UserError(_('Only draft, pending, or approved records can be cancelled.'))
-            
-           
-            if rec.state == 'approved' and not self.user_has_groups('fund_management.group_fund_admin'):
+
+            if rec.state == 'approved' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel approved transactions.'))
-            
+
             old_state = rec.state
             rec.state = 'cancelled'
             rec._log_approval('cancel', 'cancelled', rec.approval_comment or '', old_state, 'cancelled')
             rec._on_cancelled()
-
 
     def unlink(self):
         for rec in self:
             if rec.state not in ('draft', 'cancelled'):
                 raise UserError(_('You cannot delete a record that has been submitted or approved. Cancel it instead.'))
         return super().unlink()
+
+    
 
     def _validate_submit(self):
         pass
@@ -177,6 +256,8 @@ class FundApprovalMixin(models.AbstractModel):
 
     def _on_cancelled(self):
         pass
+
+
 
 
 class FundApprovalConfig(models.Model):
@@ -209,7 +290,7 @@ class FundApprovalHistory(models.Model):
         ('md', 'Managing Director'),
         ('cancel', 'Cancelled'),
     ], string='Action Level')
-    
+
     approver = fields.Many2one('res.users', string='Action By')
     date = fields.Datetime(string='Date', default=fields.Datetime.now)
     result = fields.Selection([
@@ -218,16 +299,16 @@ class FundApprovalHistory(models.Model):
         ('rejected', 'Rejected'),
         ('cancelled', 'Cancelled'),
     ], string='Result')
-    
+
     comment = fields.Text(string='Comment')
     previous_state = fields.Char(string='Previous Status')
     new_state = fields.Char(string='New Status')
-    
-   
+
     amount = fields.Float(string='Amount')
     fund_account_id = fields.Many2one('fund.account', string='Fund Account')
     project_id = fields.Many2one('fund.project', string='Project')
     expense_head_id = fields.Many2one('fund.expense.head', string='Expense Head')
-    
+
     creator_id = fields.Many2one('res.users', string='Record Creator')
     submitted_by_id = fields.Many2one('res.users', string='Submitted By')
+    currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id.id)

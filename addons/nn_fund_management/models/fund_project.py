@@ -14,6 +14,7 @@ class FundProject(models.Model):
         'res.company', string='Company',
         default=lambda self: self.env.company.id, required=True,
     )
+    currency_id = fields.Many2one('res.currency', string='Currency', related='company_id.currency_id')
 
     
     allocation_ids = fields.One2many(

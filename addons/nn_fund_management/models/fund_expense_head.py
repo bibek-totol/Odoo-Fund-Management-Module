@@ -14,6 +14,7 @@ class FundExpenseHead(models.Model):
         'res.company', string='Company',
         default=lambda self: self.env.company.id, required=True,
     )
+    currency_id = fields.Many2one('res.currency', string='Currency', related='company_id.currency_id')
 
     allocation_ids = fields.One2many('fund.allocation', 'expense_head_id', string='Allocations')
     requisition_ids = fields.One2many('fund.requisition', 'expense_head_id', string='Requisitions')

@@ -32,7 +32,7 @@ class FundIncoming(models.Model):
 
     def action_confirm(self):
        
-        if not self.user_has_groups('fund_management.group_finance_user') and not self.user_has_groups('fund_management.group_fund_admin'):
+        if not self.user_has_groups('nn_fund_management.group_finance_user') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
             raise UserError(_('Only authorized Finance Users can confirm incoming funds.'))
 
         for rec in self:
@@ -41,10 +41,25 @@ class FundIncoming(models.Model):
             if rec.amount <= 0:
                 raise UserError(_('Amount must be greater than zero.'))
             rec.state = 'confirmed'
+            
+            # Log audit history
+            self.env['fund.approval.history'].create({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'document_reference': rec.name,
+                'approval_level': 'confirm',
+                'approver': self.env.user.id,
+                'result': 'approved',
+                'comment': rec.description or 'Incoming fund confirmed.',
+                'new_state': 'confirmed',
+                'amount': rec.amount,
+                'fund_account_id': rec.fund_account_id.id,
+                'currency_id': self.env.company.currency_id.id,
+            })
 
     def action_cancel(self):
         for rec in self:
-            if rec.state == 'confirmed' and not self.user_has_groups('fund_management.group_fund_admin'):
+            if rec.state == 'confirmed' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel confirmed incoming funds.'))
             rec.state = 'rejected'
 

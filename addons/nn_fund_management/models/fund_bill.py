@@ -11,7 +11,7 @@ class FundBill(models.Model):
     name = fields.Char(string='Bill No', default='New', readonly=True, copy=False)
     requisition_id = fields.Many2one(
         'fund.requisition', string='Requisition', required=True,
-        domain="[('state', '=', 'approved')]") 
+        domain="[('state', '=', 'approved')]")
 
     project_id = fields.Many2one(
         'fund.project', string='Project',
@@ -20,7 +20,7 @@ class FundBill(models.Model):
     expense_head_id = fields.Many2one(
         'fund.expense.head', string='Expense Head',
         related='requisition_id.expense_head_id', store=True, readonly=True)
-        
+
     amount = fields.Float(string='Bill Amount', required=True)
     vendor = fields.Char(string='Vendor / Supplier')
     date = fields.Date(string='Bill Date', default=fields.Date.today)
@@ -45,7 +45,6 @@ class FundBill(models.Model):
 
     @api.constrains('requisition_id', 'project_id', 'expense_head_id')
     def _check_requisition_match(self):
-        
         for rec in self:
             if rec.requisition_id.project_id and rec.project_id != rec.requisition_id.project_id:
                 raise ValidationError(_("Project does not match the requisition's project."))
@@ -61,7 +60,6 @@ class FundBill(models.Model):
             if rec.requisition_id.state != 'approved':
                 raise UserError(_('Requisition must be approved to post bills.'))
 
-          
             other_billed = sum(
                 rec.requisition_id.bill_ids.filtered(
                     lambda b: b.state == 'confirmed' and b.id != rec.id
@@ -74,17 +72,32 @@ class FundBill(models.Model):
 
             rec.state = 'confirmed'
 
+            # Log audit history
+            self.env['fund.approval.history'].create({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'document_reference': rec.name,
+                'approval_level': 'confirm',
+                'approver': self.env.user.id,
+                'result': 'approved',
+                'comment': rec.description or 'Bill confirmed.',
+                'new_state': 'confirmed',
+                'amount': rec.amount,
+                'project_id': rec.project_id.id,
+                'expense_head_id': rec.expense_head_id.id,
+                'currency_id': self.env.company.currency_id.id,
+            })
+            
+          
+            rec.requisition_id._compute_billed()
+            rec.requisition_id._check_near_exhaustion()
 
-
-               
-    
     def action_cancel(self):
         for rec in self:
             if rec.state == 'confirmed' and rec.requisition_id.state == 'closed':
                 raise UserError(_('You cannot cancel a bill against a closed requisition. Reopen the requisition first.'))
             rec.state = 'cancelled'
 
-   
     def unlink(self):
         for rec in self:
             if rec.state == 'confirmed':

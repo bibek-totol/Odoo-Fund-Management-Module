@@ -65,7 +65,7 @@
                                attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="attachment_name" invisible="1"/>
                     </group>
-                    <group string="Approval Comment" groups="fund_management.group_fund_manager">
+                    <group string="Approval Comment" groups="nn_fund_management.group_fund_manager">
                         <field name="approval_comment"/>
                     </group>
                     <notebook>

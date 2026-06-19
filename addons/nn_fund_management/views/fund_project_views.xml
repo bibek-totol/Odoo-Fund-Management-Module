@@ -1,15 +1,17 @@
 <odoo>
-    <record id="view_fund_project_tree" model="ir.ui.view">
-        <field name="name">fund.project.tree</field>
+    <record id="view_fund_project_list" model="ir.ui.view">
+        <field name="name">fund.project.list</field>
         <field name="model">fund.project</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="code"/>
+                <field name="project_manager_id"/>
                 <field name="total_allocated"/>
                 <field name="available_fund"/>
                 <field name="total_spent"/>
-            </tree>
+                <field name="state"/>
+            </list>
         </field>
     </record>
 
@@ -18,93 +20,43 @@
         <field name="model">fund.project</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_open" type="object" string="Start Project" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_close" type="object" string="Close Project" invisible="state != 'open'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                </header>
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
-                            <field name="code"/>
+                            <field name="name" readonly="state != 'draft'"/>
+                            <field name="code" readonly="state != 'draft'"/>
+                            <field name="project_manager_id" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="active"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
+                    <group string="Financial Summary">
+                        <field name="total_allocated" readonly="1"/>
+                        <field name="available_fund" readonly="1"/>
+                        <field name="requisition_hold" readonly="1"/>
+                        <field name="transfer_hold" readonly="1"/>
+                        <field name="approved_unspent" readonly="1"/>
+                        <field name="total_spent" readonly="1"/>
+                        <field name="incoming_transfers" readonly="1"/>
+                        <field name="outgoing_transfers" readonly="1"/>
+                    </group>
                     <notebook>
-                        <page string="Balances">
-                            <group>
-                                <group string="Allocations &amp; Transfers">
-                                    <field name="total_allocated" readonly="1"/>
-                                    <field name="incoming_transfers" readonly="1"/>
-                                    <field name="outgoing_transfers" readonly="1"/>
-                                </group>
-                                <group string="Spending">
-                                    <field name="total_spent" readonly="1"/>
-                                    <field name="released_funds" readonly="1"/>
-                                    <field name="approved_unspent" readonly="1"/>
-                                    <field name="available_fund" readonly="1"/>
-                                </group>
-                                <group string="Holds">
-                                    <field name="requisition_hold" readonly="1"/>
-                                    <field name="transfer_hold" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
                         <page string="Allocations">
                             <field name="allocation_ids">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="amount"/>
                                     <field name="state"/>
-                                    <field name="request_date"/>
-                                </tree>
+                                </list>
                             </field>
-                        </page>
-                        <page string="Requisitions">
-                            <field name="requisition_ids">
-                                <tree>
-                                    <field name="name"/>
-                                    <field name="amount"/>
-                                    <field name="state"/>
-                                    <field name="request_date"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="Bills">
-                            <field name="bill_ids">
-                                <tree>
-                                    <field name="name"/>
-                                    <field name="amount"/>
-                                    <field name="state"/>
-                                    <field name="date"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="Transfers">
-                            <group>
-                                <group string="Outgoing">
-                                    <field name="outgoing_transfer_ids" nolabel="1">
-                                        <tree>
-                                            <field name="name"/>
-                                            <field name="amount"/>
-                                            <field name="state"/>
-                                        </tree>
-                                    </field>
-                                </group>
-                                <group string="Incoming">
-                                    <field name="incoming_transfer_ids" nolabel="1">
-                                        <tree>
-                                            <field name="name"/>
-                                            <field name="amount"/>
-                                            <field name="state"/>
-                                        </tree>
-                                    </field>
-                                </group>
-                            </group>
                         </page>
                     </notebook>
-                    <group>
-                        <field name="description"/>
-                    </group>
                 </sheet>
             </form>
         </field>
@@ -113,6 +65,6 @@
     <record id="action_fund_project" model="ir.actions.act_window">
         <field name="name">Projects</field>
         <field name="res_model">fund.project</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

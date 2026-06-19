@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class FundIncoming(models.Model):
@@ -22,13 +22,48 @@ class FundIncoming(models.Model):
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
         ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled'),
     ], string='Status', default='draft', tracking=True)
+
+    _sql_constraints = [
+        ('ref_unique_per_account', 'unique(fund_account_id, transaction_reference)', 'Transaction Reference must be unique within the same Fund Account.'),
+        ('amount_positive', 'CHECK(amount > 0)', 'Incoming fund amount must be greater than zero.'),
+    ]
 
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('fund.incoming') or 'New'
-        return super().create(vals)
+        rec = super().create(vals)
+        rec._check_company_consistency()
+        return rec
+
+    def write(self, vals):
+        if not self.env.context.get('fund_internal_write'):
+            if 'state' in vals:
+                raise UserError(_('Status changes must use the workflow buttons.'))
+            protected = {'fund_account_id', 'amount', 'transaction_reference', 'company_id'}
+            if protected & set(vals):
+                for rec in self:
+                    if rec.state != 'draft':
+                        raise UserError(_('You cannot modify confirmed or cancelled incoming fund values.'))
+        res = super().write(vals)
+        self._check_company_consistency()
+        return res
+
+    @api.constrains('fund_account_id', 'company_id')
+    def _check_company_consistency(self):
+        for rec in self:
+            if rec.fund_account_id and rec.fund_account_id.company_id != rec.company_id:
+                raise ValidationError(_('Fund account company must match the incoming fund company.'))
+
+    def _lock_fund_account(self):
+        accounts = self.mapped('fund_account_id').exists()
+        if accounts:
+            self.env.cr.execute(
+                'SELECT id FROM "%s" WHERE id IN %%s FOR UPDATE' % accounts._table,
+                [tuple(sorted(accounts.ids))],
+            )
 
     def action_confirm(self):
        
@@ -38,12 +73,15 @@ class FundIncoming(models.Model):
         for rec in self:
             if rec.state != 'draft':
                 continue
+            rec._lock_fund_account()
             if rec.amount <= 0:
                 raise UserError(_('Amount must be greater than zero.'))
-            rec.state = 'confirmed'
+            rec._check_company_consistency()
+            old_state = rec.state
+            rec.with_context(fund_internal_write=True).state = 'confirmed'
             
             # Log audit history
-            self.env['fund.approval.history'].create({
+            self.env['fund.approval.history'].sudo().create({
                 'res_model': rec._name,
                 'res_id': rec.id,
                 'document_reference': rec.name,
@@ -51,17 +89,42 @@ class FundIncoming(models.Model):
                 'approver': self.env.user.id,
                 'result': 'approved',
                 'comment': rec.description or 'Incoming fund confirmed.',
+                'previous_state': old_state,
                 'new_state': 'confirmed',
                 'amount': rec.amount,
                 'fund_account_id': rec.fund_account_id.id,
-                'currency_id': self.env.company.currency_id.id,
+                'creator_id': rec.create_uid.id,
+                'submitted_by_id': self.env.user.id,
+                'company_id': rec.company_id.id,
+                'currency_id': rec.company_id.currency_id.id,
             })
 
     def action_cancel(self):
         for rec in self:
             if rec.state == 'confirmed' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel confirmed incoming funds.'))
-            rec.state = 'rejected'
+            if rec.state not in ('draft', 'confirmed'):
+                raise UserError(_('Only draft or confirmed incoming funds can be cancelled.'))
+            old_state = rec.state
+            new_state = 'cancelled' if old_state == 'confirmed' else 'rejected'
+            rec.with_context(fund_internal_write=True).state = new_state
+            self.env['fund.approval.history'].sudo().create({
+                'res_model': rec._name,
+                'res_id': rec.id,
+                'document_reference': rec.name,
+                'approval_level': 'cancel',
+                'approver': self.env.user.id,
+                'result': 'cancelled',
+                'comment': rec.description or 'Incoming fund cancelled.',
+                'previous_state': old_state,
+                'new_state': new_state,
+                'amount': rec.amount,
+                'fund_account_id': rec.fund_account_id.id,
+                'creator_id': rec.create_uid.id,
+                'submitted_by_id': self.env.user.id,
+                'company_id': rec.company_id.id,
+                'currency_id': rec.company_id.currency_id.id,
+            })
 
     
     def unlink(self):
@@ -69,7 +132,3 @@ class FundIncoming(models.Model):
             if rec.state == 'confirmed':
                 raise UserError(_('You cannot delete a confirmed incoming fund. Cancel it first.'))
         return super().unlink()
-
-    _sql_constraints = [
-        ('ref_unique_per_account', 'unique(fund_account_id, transaction_reference)', 'Transaction Reference must be unique within the same Fund Account.'),
-    ]

@@ -1,122 +1,88 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api
 
 
 class FundDashboard(models.TransientModel):
     _name = 'fund.dashboard'
-    _description = 'Fund Management Dashboard'
+    _description = 'Fund Management Executive Dashboard'
 
-  
-    total_received = fields.Float(string='Total Received', readonly=True)
-    unassigned_balance = fields.Float(string='Unassigned Balance', readonly=True)
-    held_amount = fields.Float(string='On Hold', readonly=True)
-    assigned_amount = fields.Float(string='Assigned', readonly=True)
-    total_spent = fields.Float(string='Total Spent', readonly=True)
-
+    currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
     
-    pending_allocations = fields.Integer(string='Pending Allocations', readonly=True)
-    pending_requisitions = fields.Integer(string='Pending Requisitions', readonly=True)
-    pending_transfers = fields.Integer(string='Pending Transfers', readonly=True)
-    total_pending = fields.Integer(string='Total Pending Approvals', readonly=True)
+    # KPIs
+    total_received = fields.Float(string='Total Received')
+    unassigned_balance = fields.Float(string='Unassigned Balance')
+    held_amount = fields.Float(string='Held Amount')
+    assigned_amount = fields.Float(string='Assigned Amount')
+    spent_amount = fields.Float(string='Spent Amount')
     
-    name = fields.Char(string='Name', default='Fund Management Dashboard')
-    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
-    currency_id = fields.Many2one('res.currency', string='Currency', related='company_id.currency_id')
-
-   
+    # Dynamic Lists (Using existing models)
+    pending_approval_count = fields.Integer(string='Pending Approvals', compute='_compute_lists')
     project_ids = fields.Many2many(
-        'fund.project', string='Projects',
-        compute='_compute_lists',
+        'fund.project', string='Project Balances',
+        relation='fund_dashboard_project_rel',
     )
     expense_head_ids = fields.Many2many(
-        'fund.expense.head', string='Expense Heads',
-        compute='_compute_lists',
+        'fund.expense.head', string='Expense-Head Balances',
+        relation='fund_dashboard_expense_rel',
     )
-    recent_movement_ids = fields.Many2many(
-        'fund.approval.history', string='Recent Movements',
-        compute='_compute_lists',
+    recent_history_ids = fields.Many2many(
+        'fund.approval.history', string='Recent Fund Movements',
+        relation='fund_dashboard_history_rel',
     )
-
-   
 
     @api.model
+    def default_get(self, fields_list):
+        res = super(FundDashboard, self).default_get(fields_list)
+        kpis = self._get_kpis()
+        res.update(kpis)
+        res.update({
+            'project_ids': [(6, 0, self.env['fund.project'].search([], order='name').ids)],
+            'expense_head_ids': [(6, 0, self.env['fund.expense.head'].search([], order='name').ids)],
+            'recent_history_ids': [(6, 0, self.env['fund.approval.history'].search([], order='date desc', limit=15).ids)],
+        })
+        return res
+
     def _get_kpis(self):
-      
-        accounts = self.env['fund.account'].search([
-            ('company_id', '=', self.env.company.id),
-        ])
+        accounts = self.env['fund.account'].search([])
+        projects = self.env['fund.project'].search([])
+        expense_heads = self.env['fund.expense.head'].search([])
 
         total_received = sum(accounts.mapped('total_received'))
-        held_amount = sum(accounts.mapped('held_balance'))
-        assigned_amount = sum(accounts.mapped('assigned_balance'))
         unassigned_balance = sum(accounts.mapped('available_balance'))
-
-      
-        total_spent = sum(
-            self.env['fund.bill'].search([
-                ('state', '=', 'confirmed'),
-                ('company_id', '=', self.env.company.id),
-            ]).mapped('amount')
+        assigned_amount = sum(accounts.mapped('assigned_balance'))
+        held_amount = (
+            sum(accounts.mapped('held_balance')) +
+            sum(projects.mapped('requisition_hold')) +
+            sum(projects.mapped('transfer_hold')) +
+            sum(expense_heads.mapped('requisition_hold')) +
+            sum(expense_heads.mapped('transfer_hold'))
         )
-
-        pending_states = ('submitted', 'gm_approved')
-        pending_allocations = self.env['fund.allocation'].search_count([
-            ('state', 'in', pending_states),
-            ('company_id', '=', self.env.company.id),
-        ])
-        pending_requisitions = self.env['fund.requisition'].search_count([
-            ('state', 'in', pending_states),
-            ('company_id', '=', self.env.company.id),
-        ])
-        pending_transfers = self.env['fund.transfer'].search_count([
-            ('state', 'in', pending_states),
-            ('company_id', '=', self.env.company.id),
-        ])
+        spent_amount = (
+            sum(projects.mapped('total_spent')) +
+            sum(expense_heads.mapped('total_spent'))
+        )
 
         return {
             'total_received': total_received,
             'unassigned_balance': unassigned_balance,
             'held_amount': held_amount,
             'assigned_amount': assigned_amount,
-            'total_spent': total_spent,
-            'pending_allocations': pending_allocations,
-            'pending_requisitions': pending_requisitions,
-            'pending_transfers': pending_transfers,
-            'total_pending': pending_allocations + pending_requisitions + pending_transfers,
-            'company_id': self.env.company.id,
-            'name': _('Fund Management Dashboard (%s)') % fields.Date.today(),
+            'spent_amount': spent_amount,
         }
 
-   
-
-    @api.depends()
     def _compute_lists(self):
         for rec in self:
-            rec.project_ids = self.env['fund.project'].search([
-                ('company_id', '=', self.env.company.id),
-                ('active', '=', True),
-            ])
-            rec.expense_head_ids = self.env['fund.expense.head'].search([
-                ('company_id', '=', self.env.company.id),
-                ('active', '=', True),
-            ])
-          
-            rec.recent_movement_ids = self.env['fund.approval.history'].search(
-                [], order='date desc', limit=20,
-            )
+            # Count anything in 'submitted' or 'gm_approved' state
+            alloc_count = self.env['fund.allocation'].search_count([('state', 'in', ('submitted', 'gm_approved'))])
+            req_count = self.env['fund.requisition'].search_count([('state', 'in', ('submitted', 'gm_approved'))])
+            trans_count = self.env['fund.transfer'].search_count([('state', 'in', ('submitted', 'gm_approved'))])
+            rec.pending_approval_count = alloc_count + req_count + trans_count
 
-   
+    # Action methods to drill down
+    def action_view_projects(self):
+        return self.env.ref('nn_fund_management.action_fund_project').read()[0]
 
-    @api.model
-    def action_open_dashboard(self):
-       
-        kpis = self._get_kpis()
-        record = self.create(kpis)
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Fund Management Dashboard'),
-            'res_model': 'fund.dashboard',
-            'res_id': record.id,
-            'view_mode': 'form',
-            'target': 'current',
-            'context': self.env.context,
-        }
+    def action_view_expense_heads(self):
+        return self.env.ref('nn_fund_management.action_fund_expense_head').read()[0]
+
+    def action_view_recent_movements(self):
+        return self.env.ref('nn_fund_management.action_fund_history').read()[0]

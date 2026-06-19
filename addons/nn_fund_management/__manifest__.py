@@ -46,8 +46,9 @@ Main Features:
         'views/fund_bill_views.xml',
         'views/fund_transfer_views.xml',
         'views/fund_approval_config_views.xml',
-        'views/menus/fund_menus.xml',
         'views/fund_dashboard_views.xml',
+        'views/menus/fund_menus.xml',
+        'security/fund_rules.xml',
     ],
 
     'demo': [

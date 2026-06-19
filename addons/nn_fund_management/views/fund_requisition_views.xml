@@ -1,9 +1,9 @@
 <odoo>
-    <record id="view_fund_requisition_tree" model="ir.ui.view">
-        <field name="name">fund.requisition.tree</field>
+    <record id="view_fund_requisition_list" model="ir.ui.view">
+        <field name="name">fund.requisition.list</field>
         <field name="model">fund.requisition</field>
         <field name="arch" type="xml">
-            <tree decoration-info="state in ('submitted','gm_approved')"
+            <list decoration-info="state in ('submitted','gm_approved')"
                   decoration-success="state == 'approved'"
                   decoration-muted="state == 'closed'"
                   decoration-danger="state == 'rejected'">
@@ -15,7 +15,7 @@
                 <field name="remaining_amount"/>
                 <field name="state"/>
                 <field name="required_date"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -25,33 +25,33 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_submit" type="object" string="Submit" class="btn-primary" states="draft"/>
-                    <button name="action_gm_approve" type="object" string="GM Approve" class="btn-primary" states="submitted"/>
-                    <button name="action_md_approve" type="object" string="MD Approve" class="btn-primary" states="gm_approved"/>
-                    <button name="action_close" type="object" string="Close Requisition" class="btn-secondary" states="approved"/>
-                    <button name="action_reopen" type="object" string="Reopen" class="btn-secondary" states="closed"/>
-                    <button name="action_reject" type="object" string="Reject" class="btn-danger" states="submitted,gm_approved"/>
-                    <button name="action_cancel" type="object" string="Cancel" states="draft,submitted,gm_approved"/>
+                    <button name="action_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_gm_approve" type="object" string="GM Approve" class="oe_highlight" invisible="state != 'submitted'" groups="nn_fund_management.group_gm_approver"/>
+                    <button name="action_md_approve" type="object" string="MD Approve" class="oe_highlight" invisible="state != 'gm_approved'" groups="nn_fund_management.group_md_approver"/>
+                    <button name="action_close" type="object" string="Close" invisible="state != 'approved'"/>
+                    <button name="action_reopen" type="object" string="Reopen" invisible="state != 'closed'"/>
+                    <button name="action_reject" type="object" string="Reject" invisible="state not in ('submitted','gm_approved')" groups="nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft','submitted','gm_approved','approved')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,gm_approved,approved,closed"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name" readonly="1"/>
-                            <field name="amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="request_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="required_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="request_date" readonly="state != 'draft'"/>
+                            <field name="required_date" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="project_id" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('expense_head_id', '=', False)]}"/>
-                            <field name="expense_head_id" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('project_id', '=', False)]}"/>
+                            <field name="project_id" readonly="state != 'draft'" required="not expense_head_id"/>
+                            <field name="expense_head_id" readonly="state != 'draft'" required="not project_id"/>
                             <field name="requested_by" readonly="1"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     <group>
-                        <field name="purpose" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="attachment" filename="attachment_name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="purpose" readonly="state != 'draft'"/>
+                        <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
                         <field name="attachment_name" invisible="1"/>
                     </group>
                     <group string="Billing Summary">
@@ -65,24 +65,24 @@
                     <notebook>
                         <page string="Bills">
                             <field name="bill_ids">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="amount"/>
                                     <field name="vendor"/>
                                     <field name="state"/>
                                     <field name="date"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Approval History">
                             <field name="approval_history_ids">
-                                <tree>
+                                <list>
                                     <field name="approver"/>
                                     <field name="approval_level"/>
                                     <field name="result"/>
                                     <field name="date"/>
                                     <field name="comment"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -99,6 +99,6 @@
     <record id="action_fund_requisition" model="ir.actions.act_window">
         <field name="name">Fund Requisitions</field>
         <field name="res_model">fund.requisition</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

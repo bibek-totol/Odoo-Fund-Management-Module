@@ -1,225 +1,136 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-   
     <record id="view_fund_dashboard_form" model="ir.ui.view">
         <field name="name">fund.dashboard.form</field>
         <field name="model">fund.dashboard</field>
         <field name="arch" type="xml">
-            <form string="Fund Management Dashboard" create="false" edit="false" delete="false">
-
-                
-                <header>
-                    <button name="action_open_dashboard"
-                            string="Refresh Dashboard"
-                            type="object"
-                            class="btn-primary"
-                            icon="fa-refresh"/>
-                </header>
-
+            <form string="Executive Dashboard" create="false" edit="false">
                 <sheet>
                     <field name="currency_id" invisible="1"/>
-                    <field name="company_id" invisible="1"/>
-                   
-                    <div class="row mt16 mb8">
-                        <div class="col-12">
-                            <h2 class="text-muted">
-                                <i class="fa fa-bar-chart mr8"/>Fund Account Summary
-                            </h2>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                       
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#28a745;color:#fff;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="total_received" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">Total Received</span>
-                            </div>
-                        </div>
-                     
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#17a2b8;color:#fff;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="unassigned_balance" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">Unassigned Balance</span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#ffc107;color:#212529;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="held_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">On Hold</span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#6f42c1;color:#fff;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="assigned_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">Assigned</span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#dc3545;color:#fff;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="total_spent" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">Total Spent</span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-2 col-md-4 col-sm-6 mb16">
-                            <div class="o_stat_button o_field_widget o_stat_info" style="background:#343a40;color:#fff;border-radius:8px;padding:16px;text-align:center;">
-                                <span class="o_stat_value">
-                                    <field name="total_pending" readonly="1"/>
-                                </span>
-                                <span class="o_stat_text">Pending Approvals</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mt8 mb8">
-                        <div class="col-12">
-                            <h3 class="text-muted">
-                                <i class="fa fa-clock-o mr8"/>Pending Approvals Breakdown
-                            </h3>
-                        </div>
-                    </div>
-                    <div class="row mb16">
-                        <div class="col-md-4">
-                            <div class="card text-center p-3 border-warning">
-                                <div class="h4 font-weight-bold text-warning">
-                                    <field name="pending_allocations" readonly="1"/>
+                    <div class="o_dashboards">
+                        <!-- Top Rows: Primary KPIs -->
+                        <div class="row">
+                            <div class="col-md-2" style="padding: 10px;">
+                                <div class="card text-center bg-primary-light border-primary" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Total Received</h6>
+                                        <h3 class="text-primary"><field name="total_received" widget="monetary"/></h3>
+                                    </div>
                                 </div>
-                                <div class="text-muted small">Allocations Pending</div>
-                                <button name="%(nn_fund_management.action_fund_allocation)d"
-                                        type="action"
-                                        string="View Allocations"
-                                        class="btn btn-sm btn-outline-warning mt8"/>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-center p-3 border-info">
-                                <div class="h4 font-weight-bold text-info">
-                                    <field name="pending_requisitions" readonly="1"/>
+                            <div class="col-md-2" style="padding: 10px;">
+                                <div class="card text-center bg-success-light border-success" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Unassigned balance</h6>
+                                        <h3 class="text-success"><field name="unassigned_balance" widget="monetary"/></h3>
+                                    </div>
                                 </div>
-                                <div class="text-muted small">Requisitions Pending</div>
-                                <button name="%(nn_fund_management.action_fund_requisition)d"
-                                        type="action"
-                                        string="View Requisitions"
-                                        class="btn btn-sm btn-outline-info mt8"/>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-center p-3 border-secondary">
-                                <div class="h4 font-weight-bold text-secondary">
-                                    <field name="pending_transfers" readonly="1"/>
+                            <div class="col-md-2" style="padding: 10px;">
+                                <div class="card text-center bg-warning-light border-warning" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Held amount</h6>
+                                        <h3 class="text-warning"><field name="held_amount" widget="monetary"/></h3>
+                                    </div>
                                 </div>
-                                <div class="text-muted small">Transfers Pending</div>
-                                <button name="%(nn_fund_management.action_fund_transfer)d"
-                                        type="action"
-                                        string="View Transfers"
-                                        class="btn btn-sm btn-outline-secondary mt8"/>
+                            </div>
+                            <div class="col-md-3" style="padding: 10px;">
+                                <div class="card text-center bg-info-light border-info" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Assigned amount</h6>
+                                        <h3 class="text-info"><field name="assigned_amount" widget="monetary"/></h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="padding: 10px;">
+                                <div class="card text-center bg-danger-light border-danger" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+                                    <div class="card-body">
+                                        <h6 class="text-muted">Spent amount</h6>
+                                        <h3 class="text-danger"><field name="spent_amount" widget="monetary"/></h3>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                   
-                    <div class="row mt8 mb8">
-                        <div class="col-12">
-                            <h3 class="text-muted">
-                                <i class="fa fa-folder-open mr8"/>Project Balances
-                            </h3>
-                        </div>
-                    </div>
-                    <field name="project_ids" readonly="1" nolabel="1">
-                        <list>
-                            <field name="name" string="Project"/>
-                            <field name="code" string="Code"/>
-                            <field name="total_allocated" string="Allocated" widget="monetary"/>
-                            <field name="approved_unspent" string="Approved Unspent" widget="monetary"/>
-                            <field name="requisition_hold" string="Req. Hold" widget="monetary"/>
-                            <field name="transfer_hold" string="Transfer Hold" widget="monetary"/>
-                            <field name="available_fund" string="Available" widget="monetary"/>
-                            <field name="total_spent" string="Spent" widget="monetary"/>
-                        </list>
-                    </field>
+                        <hr/>
 
-                   
-                    <div class="row mt16 mb8">
-                        <div class="col-12">
-                            <h3 class="text-muted">
-                                <i class="fa fa-tags mr8"/>Expense Head Balances
-                            </h3>
-                        </div>
-                    </div>
-                    <field name="expense_head_ids" readonly="1" nolabel="1">
-                        <list>
-                            <field name="name" string="Expense Head"/>
-                            <field name="code" string="Code"/>
-                            <field name="total_allocated" string="Allocated" widget="monetary"/>
-                            <field name="approved_unspent" string="Approved Unspent" widget="monetary"/>
-                            <field name="requisition_hold" string="Req. Hold" widget="monetary"/>
-                            <field name="transfer_hold" string="Transfer Hold" widget="monetary"/>
-                            <field name="available_fund" string="Available" widget="monetary"/>
-                            <field name="total_spent" string="Spent" widget="monetary"/>
-                        </list>
-                    </field>
+                        <!-- Main Sections -->
+                        <notebook>
+                            <page string="Project Balances" name="projects">
+                                <group>
+                                    <button name="action_view_projects" type="object" string="Manage All Projects" class="btn-primary" icon="fa-arrow-right"/>
+                                </group>
+                                <field name="project_ids" readonly="1">
+                                    <list create="false" edit="false" delete="false">
+                                        <field name="name"/>
+                                        <field name="total_allocated"/>
+                                        <field name="available_fund"/>
+                                        <field name="requisition_hold"/>
+                                        <field name="transfer_hold"/>
+                                        <field name="approved_unspent"/>
+                                        <field name="total_spent"/>
+                                        <field name="incoming_transfers"/>
+                                        <field name="outgoing_transfers"/>
+                                    </list>
+                                </field>
+                            </page>
 
-                  
-                    <div class="row mt16 mb8">
-                        <div class="col-12">
-                            <h3 class="text-muted">
-                                <i class="fa fa-history mr8"/>Recent Fund Movements (last 20)
-                            </h3>
-                        </div>
-                    </div>
-                    <field name="recent_movement_ids" readonly="1" nolabel="1">
-                        <list>
-                            <field name="date" string="Date"/>
-                            <field name="document_reference" string="Reference"/>
-                            <field name="res_model" string="Document Type"/>
-                            <field name="approval_level" string="Action"/>
-                            <field name="result" string="Result"
-                                   decoration-success="result == 'approved'"
-                                   decoration-warning="result == 'submitted'"
-                                   decoration-danger="result == 'rejected'"
-                                   decoration-muted="result == 'cancelled'"
-                                   widget="badge"/>
-                            <field name="amount" string="Amount" widget="monetary"/>
-                            <field name="approver" string="Action By"/>
-                            <field name="comment" string="Comment" optional="hide"/>
-                        </list>
-                    </field>
+                            <page string="Expense-Heads" name="expenses">
+                                <group>
+                                    <button name="action_view_expense_heads" type="object" string="Manage Expense Heads" class="btn-primary" icon="fa-arrow-right"/>
+                                </group>
+                                <field name="expense_head_ids" readonly="1">
+                                    <list create="false" edit="false" delete="false">
+                                        <field name="name"/>
+                                        <field name="total_allocated"/>
+                                        <field name="available_fund"/>
+                                        <field name="requisition_hold"/>
+                                        <field name="transfer_hold"/>
+                                        <field name="approved_unspent"/>
+                                        <field name="total_spent"/>
+                                        <field name="incoming_transfers"/>
+                                        <field name="outgoing_transfers"/>
+                                    </list>
+                                </field>
+                            </page>
 
+                            <page string="Pending Approvals" name="approvals">
+                                <div class="alert alert-info" invisible="pending_approval_count == 0">
+                                    You have <field name="pending_approval_count" class="font-weight-bold"/> documents awaiting approval.
+                                </div>
+                                <div class="alert alert-success" invisible="pending_approval_count != 0">
+                                    All clear! No pending approvals at this time.
+                                </div>
+                            </page>
+
+                            <page string="Recent Fund Movements" name="history">
+                                <group>
+                                    <button name="action_view_recent_movements" type="object" string="View Full Audit History" class="btn-secondary" icon="fa-history"/>
+                                </group>
+                                <field name="recent_history_ids" readonly="1">
+                                    <list create="false" edit="false" delete="false">
+                                        <field name="date"/>
+                                        <field name="document_reference"/>
+                                        <field name="approval_level"/>
+                                        <field name="result"/>
+                                        <field name="amount"/>
+                                        <field name="fund_account_id"/>
+                                        <field name="project_id"/>
+                                        <field name="expense_head_id"/>
+                                        <field name="approver"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </div>
                 </sheet>
             </form>
         </field>
     </record>
 
-    
-    <record id="action_fund_dashboard" model="ir.actions.server">
-        <field name="name">Fund Dashboard</field>
-        <field name="model_id" ref="nn_fund_management.model_fund_dashboard"/>
-        <field name="binding_model_id" ref="nn_fund_management.model_fund_dashboard"/>
-        <field name="state">code</field>
-        <field name="code">action = model.action_open_dashboard()</field>
+    <record id="action_fund_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">fund.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="target">main</field>
     </record>
-
-    
-    <menuitem id="menu_fund_dashboard"
-              name="Dashboard"
-              parent="nn_fund_management.menu_fund_root"
-              action="action_fund_dashboard"
-              sequence="1"
-              icon="fa-tachometer"/>
-
 </odoo>

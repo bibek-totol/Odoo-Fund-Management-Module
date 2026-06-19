@@ -23,13 +23,29 @@ class FundAllocation(models.Model):
         default=lambda self: self.env.company.id, required=True,
     )
 
+    _sql_constraints = [
+        ('amount_positive', 'CHECK(amount > 0)', 'Allocation amount must be greater than zero.'),
+    ]
+
     
     @api.model
     def create(self, vals):
+        vals = self._normalize_requested_by_vals(vals)
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code(
                 'fund.allocation') or 'New'
-        return super().create(vals)
+        rec = super().create(vals)
+        rec._check_company_consistency()
+        return rec
+
+    def write(self, vals):
+        self._check_write_allowed(vals, {
+            'state', 'fund_account_id', 'project_id', 'expense_head_id',
+            'amount', 'company_id', 'requested_by',
+        })
+        res = super().write(vals)
+        self._check_company_consistency()
+        return res
 
    
     @api.constrains('project_id', 'expense_head_id')
@@ -40,13 +56,34 @@ class FundAllocation(models.Model):
                     'You must select either a Project or an Expense Head, not both and not neither.'
                 ))
 
+    @api.constrains('fund_account_id', 'project_id', 'expense_head_id', 'company_id')
+    def _check_company_consistency(self):
+        for rec in self:
+            target = rec.project_id or rec.expense_head_id
+            if rec.fund_account_id and rec.fund_account_id.company_id != rec.company_id:
+                raise ValidationError(_('Fund account company must match the allocation company.'))
+            if target and target.company_id != rec.company_id:
+                raise ValidationError(_('Project or expense head company must match the allocation company.'))
+
+    def _lock_submit_balance_source(self):
+        self._lock_records(self.fund_account_id)
+
    
     def _validate_submit(self):
         for rec in self:
             if rec.amount <= 0:
                 raise UserError(_('Amount must be greater than zero.'))
+            rec._check_company_consistency()
             available = rec.fund_account_id.available_balance
             if rec.amount > available:
                 raise UserError(_(
                     'Requested amount (%s) exceeds available unassigned balance (%s).'
                 ) % (rec.amount, available))
+
+    def _on_cancelled(self):
+        for rec in self:
+            target = rec.project_id or rec.expense_head_id
+            if target and target.available_fund < 0:
+                raise UserError(_(
+                    'This approved allocation cannot be cancelled because %s has already used or reserved these funds.'
+                ) % target.name)

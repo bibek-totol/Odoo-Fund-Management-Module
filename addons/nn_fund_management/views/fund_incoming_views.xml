@@ -1,17 +1,16 @@
 <odoo>
-    <record id="view_fund_incoming_tree" model="ir.ui.view">
-        <field name="name">fund.incoming.tree</field>
+    <record id="view_fund_incoming_list" model="ir.ui.view">
+        <field name="name">fund.incoming.list</field>
         <field name="model">fund.incoming</field>
         <field name="arch" type="xml">
-            <tree>
+            <list decoration-info="state == 'draft'" decoration-success="state == 'confirmed'">
                 <field name="name"/>
                 <field name="fund_account_id"/>
                 <field name="amount"/>
-                <field name="transaction_reference"/>
-                <field name="source"/>
                 <field name="date"/>
+                <field name="transaction_reference"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -21,30 +20,29 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_confirm" type="object" string="Confirm"
-                            class="btn-primary" states="draft"/>
-                    <button name="action_cancel" type="object" string="Reject"
-                            class="btn-danger" states="draft,confirmed"/>
-                    <field name="state" widget="statusbar"/>
+                    <button name="action_confirm" type="object" string="Confirm" class="oe_highlight" invisible="state != 'draft'" groups="nn_fund_management.group_finance_user"/>
+                    <button name="action_cancel" type="object" string="Reject / Cancel" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Cancel Confirmed" invisible="state != 'confirmed'" groups="nn_fund_management.group_fund_admin"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,cancelled"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name" readonly="1"/>
-                            <field name="fund_account_id"/>
-                            <field name="amount"/>
-                            <field name="transaction_reference"/>
+                            <field name="fund_account_id" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="source"/>
-                            <field name="date"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="transaction_reference" readonly="state != 'draft'"/>
+                            <field name="source" readonly="state != 'draft'"/>
                         </group>
                     </group>
                     <group>
-                        <field name="description"/>
-                        <field name="attachment" filename="attachment_name"/>
+                        <field name="description" readonly="state != 'draft'"/>
+                        <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
                         <field name="attachment_name" invisible="1"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
@@ -59,6 +57,6 @@
     <record id="action_fund_incoming" model="ir.actions.act_window">
         <field name="name">Incoming Funds</field>
         <field name="res_model">fund.incoming</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

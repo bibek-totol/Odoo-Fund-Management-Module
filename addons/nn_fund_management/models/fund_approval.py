@@ -43,11 +43,10 @@ class FundApprovalMixin(models.AbstractModel):
 
     def _get_approval_config(self):
         Config = self.env['fund.approval.config']
-        config = Config.search([('company_id', '=', self.env.company.id)], limit=1)
+        company = getattr(self, 'company_id', False) or self.env.company
+        config = Config.search([('company_id', '=', company.id)], limit=1)
         if not config:
-            config = Config.search([], limit=1)
-        if not config:
-            raise UserError(_('No approval configuration found. Please create one.'))
+            raise UserError(_('No approval configuration found for company %s. Please create one.') % company.name)
         return config
 
     def _log_approval(self, level, result, comment='', previous_state='', new_state=''):
@@ -56,8 +55,15 @@ class FundApprovalMixin(models.AbstractModel):
         account_id = self.fund_account_id.id if hasattr(self, 'fund_account_id') and self.fund_account_id else False
         project_id = self.project_id.id if hasattr(self, 'project_id') and self.project_id else False
         expense_id = self.expense_head_id.id if hasattr(self, 'expense_head_id') and self.expense_head_id else False
+        company = getattr(self, 'company_id', False) or self.env.company
+        if not project_id and hasattr(self, 'from_project_id'):
+            project = self.from_project_id or self.to_project_id
+            project_id = project.id if project else False
+        if not expense_id and hasattr(self, 'from_expense_head_id'):
+            expense = self.from_expense_head_id or self.to_expense_head_id
+            expense_id = expense.id if expense else False
 
-        self.env['fund.approval.history'].create({
+        self.env['fund.approval.history'].sudo().create({
             'res_model': self._name,
             'res_id': self.id,
             'document_reference': self.name,
@@ -73,7 +79,8 @@ class FundApprovalMixin(models.AbstractModel):
             'expense_head_id': expense_id,
             'creator_id': self.create_uid.id,
             'submitted_by_id': self.requested_by.id,
-            'currency_id': self.env.company.currency_id.id,
+            'currency_id': company.currency_id.id,
+            'company_id': company.id,
         })
 
  
@@ -109,15 +116,58 @@ class FundApprovalMixin(models.AbstractModel):
         if user:
             self._schedule_activity(user.id, summary, note)
 
+    def _lock_records(self, records):
+        records = records.exists()
+        if not records:
+            return
+        ids = tuple(sorted(records.ids))
+        self.env.cr.execute(
+            'SELECT id FROM "%s" WHERE id IN %%s FOR UPDATE' % records._table,
+            [ids],
+        )
+
+    def _lock_submit_balance_source(self):
+        pass
+
+    def _check_current_user_is_requester_or_admin(self):
+        self.ensure_one()
+        if self.user_has_groups('nn_fund_management.group_fund_admin'):
+            return
+        if self.requested_by != self.env.user:
+            raise UserError(_('Only the requester or a Fund Administrator can perform this action.'))
+
+    def _check_write_allowed(self, vals, protected_fields):
+        if self.env.context.get('fund_internal_write'):
+            return
+        if 'state' in vals:
+            raise UserError(_('Status changes must use the workflow buttons.'))
+        if 'requested_by' in vals and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            raise UserError(_('Only Fund Administrators can change the requester.'))
+        changed = set(vals) & set(protected_fields)
+        if not changed:
+            return
+        for rec in self:
+            if rec.state != 'draft':
+                raise UserError(_(
+                    'You cannot modify financial fields after submission. Cancel and create a new request if values are wrong.'
+                ))
+
+    def _normalize_requested_by_vals(self, vals):
+        if not self.user_has_groups('nn_fund_management.group_fund_admin') or not vals.get('requested_by'):
+            vals['requested_by'] = self.env.user.id
+        return vals
+
     
 
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
                 continue
+            rec._check_current_user_is_requester_or_admin()
+            rec._lock_submit_balance_source()
             rec._validate_submit()
             old_state = rec.state
-            rec.state = 'submitted'
+            rec.with_context(fund_internal_write=True).state = 'submitted'
             rec._log_approval('submit', 'submitted', rec.approval_comment or '', old_state, 'submitted')
 
            
@@ -149,7 +199,7 @@ class FundApprovalMixin(models.AbstractModel):
             old_state = rec.state
             rec._log_approval('gm', 'approved', rec.approval_comment or '', old_state, 'gm_approved')
             rec.approval_comment = False
-            rec.state = 'gm_approved'
+            rec.with_context(fund_internal_write=True).state = 'gm_approved'
 
            
             rec._notify_approver(
@@ -183,7 +233,7 @@ class FundApprovalMixin(models.AbstractModel):
             old_state = rec.state
             rec._log_approval('md', 'approved', rec.approval_comment or '', old_state, 'approved')
             rec.approval_comment = False
-            rec.state = 'approved'
+            rec.with_context(fund_internal_write=True).state = 'approved'
             rec._on_approved()
 
            
@@ -200,18 +250,23 @@ class FundApprovalMixin(models.AbstractModel):
             config = rec._get_approval_config()
             if rec.state == 'submitted':
                 level, approver = 'gm', config.gm_approver_id
+                group_xmlid = 'nn_fund_management.group_gm_approver'
             else:
                 level, approver = 'md', config.md_approver_id
+                group_xmlid = 'nn_fund_management.group_md_approver'
 
+            if not self.user_has_groups(group_xmlid) and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+                raise UserError(_('You are not allowed to reject at this approval level.'))
             if self.env.user != approver and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only the current-level approver can reject.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot reject your own request.'))
 
             old_state = rec.state
-            rec._log_approval(level, 'rejected', rec.approval_comment or '', old_state, 'rejected')
+            comment = rec.approval_comment or ''
+            rec._log_approval(level, 'rejected', comment, old_state, 'rejected')
             rec.approval_comment = False
-            rec.state = 'rejected'
+            rec.with_context(fund_internal_write=True).state = 'rejected'
             rec._on_rejected()
 
            
@@ -221,7 +276,7 @@ class FundApprovalMixin(models.AbstractModel):
                 note=_(
                     'Your request <b>%s</b> was rejected at the <b>%s</b> level.<br/>'
                     'Comment: %s'
-                ) % (rec.name, level_label, rec.approval_comment or _('No comment provided.')),
+                ) % (rec.name, level_label, comment or _('No comment provided.')),
             )
 
     def action_cancel(self):
@@ -231,9 +286,11 @@ class FundApprovalMixin(models.AbstractModel):
 
             if rec.state == 'approved' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel approved transactions.'))
+            if rec.state != 'approved':
+                rec._check_current_user_is_requester_or_admin()
 
             old_state = rec.state
-            rec.state = 'cancelled'
+            rec.with_context(fund_internal_write=True).state = 'cancelled'
             rec._log_approval('cancel', 'cancelled', rec.approval_comment or '', old_state, 'cancelled')
             rec._on_cancelled()
 
@@ -265,6 +322,8 @@ class FundApprovalConfig(models.Model):
     _description = 'Fund Approval Configuration'
 
     name = fields.Char(string='Name', default='Approval Settings', required=True)
+    min_amount = fields.Float(string='Min Amount', default=0.0)
+    max_amount = fields.Float(string='Max Amount', default=0.0)
     gm_approver_id = fields.Many2one('res.users', string='GM Approver', required=True)
     md_approver_id = fields.Many2one('res.users', string='MD Approver', required=True)
     allow_self_approval = fields.Boolean(string='Allow Self Approval', default=False)
@@ -272,7 +331,16 @@ class FundApprovalConfig(models.Model):
 
     _sql_constraints = [
         ('company_unique', 'unique(company_id)', 'Only one approval configuration per company is allowed.'),
+        ('amount_range_check', 'CHECK(max_amount >= min_amount)', 'Maximum amount must be greater than or equal to minimum amount.'),
     ]
+
+    @api.constrains('gm_approver_id', 'md_approver_id')
+    def _check_approver_groups(self):
+        for rec in self:
+            if rec.gm_approver_id and not rec.gm_approver_id.has_group('nn_fund_management.group_gm_approver'):
+                raise ValidationError(_('The GM approver must belong to the GM Approver group.'))
+            if rec.md_approver_id and not rec.md_approver_id.has_group('nn_fund_management.group_md_approver'):
+                raise ValidationError(_('The MD approver must belong to the MD Approver group.'))
 
 
 class FundApprovalHistory(models.Model):
@@ -286,8 +354,13 @@ class FundApprovalHistory(models.Model):
 
     approval_level = fields.Selection([
         ('submit', 'Submitted'),
+        ('confirm', 'Confirmed'),
         ('gm', 'General Manager'),
         ('md', 'Managing Director'),
+        ('post', 'Posted'),
+        ('pay', 'Paid'),
+        ('close', 'Closed'),
+        ('reopen', 'Reopened'),
         ('cancel', 'Cancelled'),
     ], string='Action Level')
 
@@ -298,6 +371,10 @@ class FundApprovalHistory(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('cancelled', 'Cancelled'),
+        ('posted', 'Posted'),
+        ('paid', 'Paid'),
+        ('closed', 'Closed'),
+        ('reopened', 'Reopened'),
     ], string='Result')
 
     comment = fields.Text(string='Comment')
@@ -305,6 +382,10 @@ class FundApprovalHistory(models.Model):
     new_state = fields.Char(string='New Status')
 
     amount = fields.Float(string='Amount')
+    company_id = fields.Many2one(
+        'res.company', string='Company',
+        default=lambda self: self.env.company.id,
+    )
     fund_account_id = fields.Many2one('fund.account', string='Fund Account')
     project_id = fields.Many2one('fund.project', string='Project')
     expense_head_id = fields.Many2one('fund.expense.head', string='Expense Head')

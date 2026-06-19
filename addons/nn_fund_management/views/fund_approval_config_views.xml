@@ -1,4 +1,18 @@
 <odoo>
+    <record id="view_fund_approval_config_list" model="ir.ui.view">
+        <field name="name">fund.approval.config.list</field>
+        <field name="model">fund.approval.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="min_amount"/>
+                <field name="max_amount"/>
+                <field name="gm_approver_id"/>
+                <field name="md_approver_id"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_fund_approval_config_form" model="ir.ui.view">
         <field name="name">fund.approval.config.form</field>
         <field name="model">fund.approval.config</field>
@@ -6,33 +20,26 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="gm_approver_id"/>
-                        <field name="md_approver_id"/>
-                        <field name="allow_self_approval"/>
-                        <field name="company_id" groups="base.group_multi_company"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="min_amount"/>
+                            <field name="max_amount"/>
+                        </group>
+                        <group>
+                            <field name="gm_approver_id"/>
+                            <field name="md_approver_id"/>
+                            <field name="allow_self_approval"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <record id="view_fund_approval_config_tree" model="ir.ui.view">
-        <field name="name">fund.approval.config.tree</field>
-        <field name="model">fund.approval.config</field>
-        <field name="arch" type="xml">
-            <tree>
-                <field name="name"/>
-                <field name="gm_approver_id"/>
-                <field name="md_approver_id"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
-        </field>
-    </record>
-
     <record id="action_fund_approval_config" model="ir.actions.act_window">
-        <field name="name">Approval Settings</field>
+        <field name="name">Approval Configuration</field>
         <field name="res_model">fund.approval.config</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

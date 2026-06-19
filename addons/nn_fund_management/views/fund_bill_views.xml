@@ -1,18 +1,16 @@
 <odoo>
-    <record id="view_fund_bill_tree" model="ir.ui.view">
-        <field name="name">fund.bill.tree</field>
+    <record id="view_fund_bill_list" model="ir.ui.view">
+        <field name="name">fund.bill.list</field>
         <field name="model">fund.bill</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == 'confirmed'" decoration-danger="state == 'cancelled'">
+            <list decoration-info="state == 'draft'" decoration-success="state == 'paid'">
                 <field name="name"/>
                 <field name="requisition_id"/>
-                <field name="project_id"/>
-                <field name="expense_head_id"/>
-                <field name="amount"/>
                 <field name="vendor"/>
+                <field name="amount"/>
                 <field name="date"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -22,31 +20,28 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary" states="draft"/>
-                    <button name="action_cancel" type="object" string="Cancel" states="draft,confirmed"/>
-                    <field name="state" widget="statusbar"/>
+                    <button name="action_post" type="object" string="Post" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_pay" type="object" string="Pay" class="oe_highlight" invisible="state != 'posted'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft','posted','paid')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,paid,cancelled"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name" readonly="1"/>
-                            <!-- Domain ensures only approved requisitions show up -->
-                            <field name="requisition_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('state', '=', 'approved')]"/>
-                            <field name="amount" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="vendor" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="requisition_id" readonly="state != 'draft'"/>
+                            <field name="vendor" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <!-- These are auto-filled from the requisition and cannot be edited -->
-                            <field name="project_id" readonly="1"/>
-                            <field name="expense_head_id" readonly="1"/>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     <group>
-                        <field name="description" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="attachment" filename="attachment_name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
                         <field name="attachment_name" invisible="1"/>
+                        <field name="description" readonly="state != 'draft'"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
@@ -61,6 +56,6 @@
     <record id="action_fund_bill" model="ir.actions.act_window">
         <field name="name">Bills</field>
         <field name="res_model">fund.bill</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

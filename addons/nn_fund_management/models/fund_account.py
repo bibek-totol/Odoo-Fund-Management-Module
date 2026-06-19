@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class FundAccount(models.Model):
@@ -26,19 +27,19 @@ class FundAccount(models.Model):
 
     total_received = fields.Float(
         string='Total Received',
-        compute='_compute_balances', store=False,
+        compute='_compute_balances', store=False, readonly=True,
     )
     held_balance = fields.Float(
         string='On Hold',
-        compute='_compute_balances', store=False,
+        compute='_compute_balances', store=False, readonly=True,
     )
     assigned_balance = fields.Float(
         string='Assigned',
-        compute='_compute_balances', store=False,
+        compute='_compute_balances', store=False, readonly=True,
     )
     available_balance = fields.Float(
         string='Available Unassigned',
-        compute='_compute_balances', store=False,
+        compute='_compute_balances', store=False, readonly=True,
     )
 
     @api.depends(
@@ -66,3 +67,11 @@ class FundAccount(models.Model):
             acc.available_balance = (
                 acc.total_received - acc.held_balance - acc.assigned_balance
             )
+            if acc.available_balance < 0 and abs(acc.available_balance) < 0.00001:
+                acc.available_balance = 0.0
+
+    def unlink(self):
+        for rec in self:
+            if rec.incoming_funds or rec.allocation_ids:
+                raise UserError(_('You cannot delete a fund account that has fund transactions.'))
+        return super().unlink()

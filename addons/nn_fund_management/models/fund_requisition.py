@@ -45,14 +45,16 @@ class FundRequisition(models.Model):
             )
             rec.remaining_amount = max(rec.amount - rec.billed_amount - rec.released_amount, 0.0)
 
-    @api.model
-    def create(self, vals):
-        vals = self._normalize_requested_by_vals(vals)
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('fund.requisition') or 'New'
-        rec = super().create(vals)
-        rec._check_company_consistency()
-        return rec
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals.update(self._normalize_requested_by_vals(vals))
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('fund.requisition') or 'New'
+        recs = super().create(vals_list)
+        for rec in recs:
+            rec._check_company_consistency()
+        return recs
 
     def write(self, vals):
         self._check_write_allowed(vals, {
@@ -123,7 +125,7 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state != 'closed':
                 raise UserError(_('Only closed requisitions can be reopened.'))
-            if not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can reopen closed requisitions.'))
             holder = rec.project_id or rec.expense_head_id
             rec._lock_records(holder)

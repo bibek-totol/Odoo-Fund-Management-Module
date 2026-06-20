@@ -30,13 +30,15 @@ class FundIncoming(models.Model):
         ('amount_positive', 'CHECK(amount > 0)', 'Incoming fund amount must be greater than zero.'),
     ]
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('fund.incoming') or 'New'
-        rec = super().create(vals)
-        rec._check_company_consistency()
-        return rec
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('fund.incoming') or 'New'
+        recs = super().create(vals_list)
+        for rec in recs:
+            rec._check_company_consistency()
+        return recs
 
     def write(self, vals):
         if not self.env.context.get('fund_internal_write'):
@@ -67,7 +69,7 @@ class FundIncoming(models.Model):
 
     def action_confirm(self):
        
-        if not self.user_has_groups('nn_fund_management.group_finance_user') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+        if not self.env.user.has_group('nn_fund_management.group_finance_user') and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
             raise UserError(_('Only authorized Finance Users can confirm incoming funds.'))
 
         for rec in self:
@@ -101,7 +103,7 @@ class FundIncoming(models.Model):
 
     def action_cancel(self):
         for rec in self:
-            if rec.state == 'confirmed' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if rec.state == 'confirmed' and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel confirmed incoming funds.'))
             if rec.state not in ('draft', 'confirmed'):
                 raise UserError(_('Only draft or confirmed incoming funds can be cancelled.'))

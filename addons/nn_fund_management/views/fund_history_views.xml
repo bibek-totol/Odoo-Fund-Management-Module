@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Detailed Audit History Search -->
+    <record id="nn_audit_history_search" model="ir.ui.view">
+        <field name="name">fund.approval.history.search</field>
+        <field name="model">fund.approval.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="document_reference"/>
+                <field name="approver"/>
+                <field name="submitted_by_id"/>
+                <field name="fund_account_id"/>
+                <field name="project_id"/>
+                <field name="result"/>
+                <field name="approval_level"/>
+                
+                <separator/>
+                <filter name="approved_only" string="Approved" domain="[('result', '=', 'approved')]"/>
+                <filter name="rejected_only" string="Rejected" domain="[('result', '=', 'rejected')]"/>
+                
+                <separator/>
+                <filter string="By Approver" name="group_approver" context="{'group_by': 'approver'}"/>
+                <filter string="By Document" name="group_ref" context="{'group_by': 'document_reference'}"/>
+                <filter string="By Result" name="group_res" context="{'group_by': 'result'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Detailed Audit History List -->
+    <record id="nn_audit_history_list" model="ir.ui.view">
+        <field name="name">fund.approval.history.list</field>
+        <field name="model">fund.approval.history</field>
+        <field name="arch" type="xml">
+            <list string="Audit History" create="false" edit="false" delete="false" default_order="date desc">
+                <field name="date"/>
+                <field name="document_reference"/>
+                <field name="approval_level"/>
+                <field name="approver"/>
+                <field name="result" widget="badge" 
+                       decoration-success="result in ('approved', 'posted', 'paid', 'closed', 'reopened')"
+                       decoration-info="result == 'submitted'"
+                       decoration-danger="result == 'rejected'"
+                       decoration-warning="result == 'cancelled'"/>
+                <field name="amount" sum="Total Amount"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="submitted_by_id"/>
+                <field name="creator_id" optional="hide"/>
+                <field name="fund_account_id" optional="show"/>
+                <field name="project_id" optional="show"/>
+                <field name="expense_head_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Detailed Audit History Form -->
+    <record id="nn_audit_history_form" model="ir.ui.view">
+        <field name="name">fund.approval.history.form</field>
+        <field name="model">fund.approval.history</field>
+        <field name="arch" type="xml">
+            <form string="Audit Detail" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="document_reference" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Action Details">
+                            <field name="date"/>
+                            <field name="approval_level"/>
+                            <field name="approver"/>
+                            <field name="result"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Personnel &amp; Context">
+                            <field name="submitted_by_id"/>
+                            <field name="creator_id"/>
+                            <field name="company_id"/>
+                        </group>
+                    </group>
+                    <group string="Entities Involved">
+                        <group>
+                            <field name="fund_account_id"/>
+                            <field name="project_id"/>
+                            <field name="expense_head_id"/>
+                        </group>
+                    </group>
+                    <group string="History &amp; Feedback">
+                        <field name="comment" placeholder="No comments provided" nolabel="1"/>
+                        <group>
+                            <field name="previous_state"/>
+                            <field name="new_state"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

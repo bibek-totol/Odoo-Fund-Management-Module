@@ -6,122 +6,146 @@
             <form string="Executive Dashboard" create="false" edit="false">
                 <sheet>
                     <field name="currency_id" invisible="1"/>
-                    <div class="o_dashboards">
-                        <!-- Top Rows: Primary KPIs -->
-                        <div class="row">
-                            <div class="col-md-2" style="padding: 10px;">
-                                <div class="card text-center bg-primary-light border-primary" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                                    <div class="card-body">
-                                        <h6 class="text-muted">Total Received</h6>
-                                        <h3 class="text-primary"><field name="total_received" widget="monetary"/></h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-2" style="padding: 10px;">
-                                <div class="card text-center bg-success-light border-success" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                                    <div class="card-body">
-                                        <h6 class="text-muted">Unassigned balance</h6>
-                                        <h3 class="text-success"><field name="unassigned_balance" widget="monetary"/></h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-2" style="padding: 10px;">
-                                <div class="card text-center bg-warning-light border-warning" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                                    <div class="card-body">
-                                        <h6 class="text-muted">Held amount</h6>
-                                        <h3 class="text-warning"><field name="held_amount" widget="monetary"/></h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3" style="padding: 10px;">
-                                <div class="card text-center bg-info-light border-info" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                                    <div class="card-body">
-                                        <h6 class="text-muted">Assigned amount</h6>
-                                        <h3 class="text-info"><field name="assigned_amount" widget="monetary"/></h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3" style="padding: 10px;">
-                                <div class="card text-center bg-danger-light border-danger" style="border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                                    <div class="card-body">
-                                        <h6 class="text-muted">Spent amount</h6>
-                                        <h3 class="text-danger"><field name="spent_amount" widget="monetary"/></h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <hr/>
-
-                        <!-- Main Sections -->
-                        <notebook>
-                            <page string="Project Balances" name="projects">
-                                <group>
-                                    <button name="action_view_projects" type="object" string="Manage All Projects" class="btn-primary" icon="fa-arrow-right"/>
-                                </group>
-                                <field name="project_ids" readonly="1">
-                                    <list create="false" edit="false" delete="false">
-                                        <field name="name"/>
-                                        <field name="total_allocated"/>
-                                        <field name="available_fund"/>
-                                        <field name="requisition_hold"/>
-                                        <field name="transfer_hold"/>
-                                        <field name="approved_unspent"/>
-                                        <field name="total_spent"/>
-                                        <field name="incoming_transfers"/>
-                                        <field name="outgoing_transfers"/>
-                                    </list>
-                                </field>
-                            </page>
-
-                            <page string="Expense-Heads" name="expenses">
-                                <group>
-                                    <button name="action_view_expense_heads" type="object" string="Manage Expense Heads" class="btn-primary" icon="fa-arrow-right"/>
-                                </group>
-                                <field name="expense_head_ids" readonly="1">
-                                    <list create="false" edit="false" delete="false">
-                                        <field name="name"/>
-                                        <field name="total_allocated"/>
-                                        <field name="available_fund"/>
-                                        <field name="requisition_hold"/>
-                                        <field name="transfer_hold"/>
-                                        <field name="approved_unspent"/>
-                                        <field name="total_spent"/>
-                                        <field name="incoming_transfers"/>
-                                        <field name="outgoing_transfers"/>
-                                    </list>
-                                </field>
-                            </page>
-
-                            <page string="Pending Approvals" name="approvals">
-                                <div class="alert alert-info" invisible="pending_approval_count == 0">
-                                    You have <field name="pending_approval_count" class="font-weight-bold"/> documents awaiting approval.
-                                </div>
-                                <div class="alert alert-success" invisible="pending_approval_count != 0">
-                                    All clear! No pending approvals at this time.
-                                </div>
-                            </page>
-
-                            <page string="Recent Fund Movements" name="history">
-                                <group>
-                                    <button name="action_view_recent_movements" type="object" string="View Full Audit History" class="btn-secondary" icon="fa-history"/>
-                                </group>
-                                <field name="recent_history_ids" readonly="1">
-                                    <list create="false" edit="false" delete="false">
-                                        <field name="date"/>
-                                        <field name="document_reference"/>
-                                        <field name="approval_level"/>
-                                        <field name="result"/>
-                                        <field name="amount"/>
-                                        <field name="fund_account_id"/>
-                                        <field name="project_id"/>
-                                        <field name="expense_head_id"/>
-                                        <field name="approver"/>
-                                    </list>
-                                </field>
-                            </page>
-                        </notebook>
+                    <!-- KPI cards — using Odoo's native o_stat_button style -->
+                    <div class="o_stat_buttons">
+                        <button class="o_stat_button" type="object" icon="fa-arrow-down">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="total_received" widget="monetary"
+                                        nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Total Received</span>
+                            </div>
+                        </button>
+                        <button class="o_stat_button" type="object" icon="fa-check-circle">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="unassigned_balance" widget="monetary"
+                                        nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Unassigned</span>
+                            </div>
+                        </button>
+                        <button class="o_stat_button" type="object" icon="fa-clock-o">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="held_amount" widget="monetary"
+                                        nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">On Hold</span>
+                            </div>
+                        </button>
+                        <button class="o_stat_button" type="object" icon="fa-folder-open">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="assigned_amount" widget="monetary"
+                                        nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Assigned</span>
+                            </div>
+                        </button>
+                        <button class="o_stat_button" type="object" icon="fa-money">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="spent_amount" widget="monetary"
+                                        nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Spent</span>
+                            </div>
+                        </button>
                     </div>
+
+                    <notebook>
+                        <page string="Project Balances" name="projects">
+                            <group>
+                                <button name="action_view_projects" type="object"
+                                    string="Manage All Projects"
+                                    class="btn btn-sm btn-primary"
+                                    icon="fa-arrow-right"/>
+                            </group>
+                            <field name="project_ids" readonly="1">
+                                <list create="false" edit="false" delete="false"
+                                      decoration-success="available_fund &gt; 0"
+                                      decoration-danger="available_fund == 0">
+                                    <field name="name"/>
+                                    <field name="total_allocated" string="Allocated"/>
+                                    <field name="available_fund" string="Available"/>
+                                    <field name="requisition_hold" string="Req. Hold"/>
+                                    <field name="transfer_hold" string="Trans. Hold"/>
+                                    <field name="approved_unspent" string="Unspent"/>
+                                    <field name="total_spent" string="Spent"/>
+                                    <field name="incoming_transfers" string="In"/>
+                                    <field name="outgoing_transfers" string="Out"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Expense Heads" name="expenses">
+                            <group>
+                                <button name="action_view_expense_heads" type="object"
+                                    string="Manage Expense Heads"
+                                    class="btn btn-sm btn-primary"
+                                    icon="fa-arrow-right"/>
+                            </group>
+                            <field name="expense_head_ids" readonly="1">
+                                <list create="false" edit="false" delete="false"
+                                      decoration-success="available_fund &gt; 0"
+                                      decoration-danger="available_fund == 0">
+                                    <field name="name"/>
+                                    <field name="total_allocated" string="Allocated"/>
+                                    <field name="available_fund" string="Available"/>
+                                    <field name="requisition_hold" string="Req. Hold"/>
+                                    <field name="transfer_hold" string="Trans. Hold"/>
+                                    <field name="approved_unspent" string="Unspent"/>
+                                    <field name="total_spent" string="Spent"/>
+                                    <field name="incoming_transfers" string="In"/>
+                                    <field name="outgoing_transfers" string="Out"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Pending Approvals" name="approvals">
+                            <group>
+                                <div invisible="pending_approval_count == 0"
+                                    class="alert alert-warning" role="alert">
+                                    <field name="pending_approval_count"
+                                        class="font-weight-bold"/> document(s) awaiting
+                                    approval. Review Allocations, Requisitions, or
+                                    Transfers to act.
+                                </div>
+                                <div invisible="pending_approval_count != 0"
+                                    class="alert alert-success" role="alert">
+                                    All clear — no pending approvals at this time.
+                                </div>
+                            </group>
+                        </page>
+
+                        <page string="Recent Movements" name="history">
+                            <group>
+                                <button name="action_view_recent_movements" type="object"
+                                    string="View Full Audit History"
+                                    class="btn btn-sm btn-secondary"
+                                    icon="fa-history"/>
+                            </group>
+                            <field name="recent_history_ids" readonly="1">
+                                <list create="false" edit="false" delete="false">
+                                    <field name="date" string="When"/>
+                                    <field name="document_reference" string="Reference"/>
+                                    <field name="approval_level" string="Action"/>
+                                    <field name="result" string="Result"/>
+                                    <field name="amount" string="Amount"/>
+                                    <field name="fund_account_id" string="Account"
+                                        optional="show"/>
+                                    <field name="project_id" string="Project"
+                                        optional="show"/>
+                                    <field name="expense_head_id" string="Exp. Head"
+                                        optional="show"/>
+                                    <field name="approver" string="By"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>

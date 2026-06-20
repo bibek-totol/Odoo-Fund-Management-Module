@@ -3,7 +3,8 @@
         <field name="name">fund.allocation.list</field>
         <field name="model">fund.allocation</field>
         <field name="arch" type="xml">
-            <list decoration-info="state in ('submitted','gm_approved')" decoration-success="state == 'approved'">
+            <list decoration-info="state in ('submitted','gm_approved')"
+                  decoration-success="state == 'approved'">
                 <field name="name"/>
                 <field name="fund_account_id"/>
                 <field name="project_id"/>
@@ -21,38 +22,60 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_gm_approve" type="object" string="GM Approve" class="oe_highlight" invisible="state != 'submitted'" groups="nn_fund_management.group_gm_approver"/>
-                    <button name="action_md_approve" type="object" string="MD Approve" class="oe_highlight" invisible="state != 'gm_approved'" groups="nn_fund_management.group_md_approver"/>
-                    <button name="action_reject" type="object" string="Reject" invisible="state not in ('submitted','gm_approved')" groups="nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver"/>
-                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft','submitted','gm_approved','approved')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,gm_approved,approved"/>
+                    <button name="action_submit" type="object" string="Submit"
+                        class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_gm_approve" type="object" string="GM Approve"
+                        class="oe_highlight" invisible="state != 'submitted'"
+                        groups="nn_fund_management.group_gm_approver"/>
+                    <button name="action_md_approve" type="object" string="MD Approve"
+                        class="oe_highlight" invisible="state != 'gm_approved'"
+                        groups="nn_fund_management.group_md_approver"/>
+                    <button name="action_reject" type="object" string="Reject"
+                        invisible="state not in ('submitted','gm_approved')"
+                        groups="nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                        invisible="state not in ('draft','submitted','gm_approved','approved')"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,submitted,gm_approved,approved"/>
                 </header>
+
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
                     <group>
-                        <group>
-                            <field name="name" readonly="1"/>
-                            <field name="fund_account_id" readonly="state != 'draft'"/>
-                            <field name="project_id" readonly="state != 'draft'"/>
-                            <field name="expense_head_id" readonly="state != 'draft'"/>
-                        </group>
-                        <group>
+                        <group string="Source">
+                            <field name="fund_account_id"
+                                readonly="state != 'draft'"
+                                options="{'no_create': True}"/>
                             <field name="amount" readonly="state != 'draft'"/>
                             <field name="request_date" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Destination">
+                            <field name="project_id" readonly="state != 'draft'"/>
+                            <field name="expense_head_id" readonly="state != 'draft'"/>
                             <field name="requested_by" readonly="1"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
-                    <group>
-                        <field name="purpose" readonly="state != 'draft'"/>
-                        <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
+
+                    <group string="Purpose &amp; Attachment">
+                        <field name="purpose" readonly="state != 'draft'"
+                            widget="text" nolabel="1"
+                            placeholder="Describe the purpose of this allocation…"/>
+                        <field name="attachment" filename="attachment_name"
+                            readonly="state != 'draft'" widget="binary"
+                            string="Supporting Document"/>
                         <field name="attachment_name" invisible="1"/>
-                        <field name="approval_comment"/>
+                        <field name="approval_comment"
+                            placeholder="Leave a comment before approving or rejecting…"/>
                     </group>
+
                     <notebook>
                         <page string="Approval History">
                             <field name="approval_history_ids">
-                                <list>
+                                <list create="false" edit="false" delete="false">
                                     <field name="approver"/>
                                     <field name="approval_level"/>
                                     <field name="result"/>
@@ -63,6 +86,7 @@
                         </page>
                     </notebook>
                 </sheet>
+
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
                     <field name="activity_ids"/>

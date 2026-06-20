@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:18
+    image: postgres:16
     container_name: odoo_postgres
     restart: unless-stopped
     environment:
@@ -13,7 +13,7 @@ services:
     networks:
       - odoo_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,25 +22,36 @@ services:
     image: odoo:${ODOO_VERSION}
     container_name: odoo_app
     restart: unless-stopped
+
     depends_on:
       db:
         condition: service_healthy
+
     environment:
       HOST: db
       PORT: 5432
       USER: ${POSTGRES_USER}
       PASSWORD: ${POSTGRES_PASSWORD}
+
     volumes:
       - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
       - ./logs:/var/log/odoo
       - odoo_data:/var/lib/odoo
-    networks:
-      - odoo_network
+
     ports:
       - "${ODOO_PORT}:8069"
       - "${ODOO_LONGPOLL_PORT}:8072"
-    command: odoo -c /etc/odoo/odoo.conf -d ${POSTGRES_DB} -i nn_fund_management --dev=all
+
+    networks:
+      - odoo_network
+
+    command: >
+      odoo
+      -c /etc/odoo/odoo.conf
+      -d ${POSTGRES_DB}
+      -u nn_fund_management
+      --dev=all
 
 volumes:
   odoo_data:

@@ -26,9 +26,11 @@ access_fund_bill_admin,fund.bill.admin,model_fund_bill,group_fund_admin,1,1,1,1
 access_fund_transfer_user,fund.transfer.user,model_fund_transfer,group_fund_user,1,1,1,0
 access_fund_transfer_admin,fund.transfer.admin,model_fund_transfer,group_fund_admin,1,1,1,1
 
-access_fund_approval_config,fund.approval.config,model_fund_approval_config,group_fund_admin,1,1,1,1
+access_fund_approval_config_approver,fund.approval.config.approver,model_fund_approval_config,group_gm_approver,1,0,0,0
+access_fund_approval_config_admin,fund.approval.config.admin,model_fund_approval_config,group_fund_admin,1,1,1,1
 
 access_fund_approval_history_user,fund.approval.history.user,model_fund_approval_history,group_fund_user,1,0,0,0
 access_fund_approval_history_admin,fund.approval.history.admin,model_fund_approval_history,group_fund_admin,1,1,1,1
+
 access_fund_dashboard_user,fund.dashboard.user,model_fund_dashboard,group_fund_user,1,1,1,1
 access_fund_dashboard_admin,fund.dashboard.admin,model_fund_dashboard,group_fund_admin,1,1,1,1

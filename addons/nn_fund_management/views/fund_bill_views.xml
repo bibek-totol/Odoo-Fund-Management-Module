@@ -20,30 +20,47 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_post" type="object" string="Post" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_pay" type="object" string="Pay" class="oe_highlight" invisible="state != 'posted'"/>
-                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft','posted','paid')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,paid,cancelled"/>
+                    <button name="action_post" type="object" string="Post"
+                        class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_pay" type="object" string="Pay"
+                        class="oe_highlight" invisible="state != 'posted'"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                        invisible="state not in ('draft','posted','paid')"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,posted,paid,cancelled"/>
                 </header>
+
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
                     <group>
-                        <group>
-                            <field name="name" readonly="1"/>
-                            <field name="requisition_id" readonly="state != 'draft'"/>
+                        <group string="Bill Details">
+                            <field name="requisition_id" readonly="state != 'draft'"
+                                options="{'no_create': True}"/>
                             <field name="vendor" readonly="state != 'draft'"/>
-                        </group>
-                        <group>
                             <field name="amount" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Linked Info">
+                            <field name="project_id" readonly="1"/>
+                            <field name="expense_head_id" readonly="1"/>
                             <field name="date" readonly="state != 'draft'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
-                    <group>
-                        <field name="attachment" filename="attachment_name" readonly="state != 'draft'"/>
+
+                    <group string="Notes &amp; Attachment">
+                        <field name="description" readonly="state != 'draft'"
+                            widget="text" nolabel="1"
+                            placeholder="Add bill description or payment notes…"/>
+                        <field name="attachment" filename="attachment_name"
+                            readonly="state != 'draft'" widget="binary"
+                            string="Bill Document"/>
                         <field name="attachment_name" invisible="1"/>
-                        <field name="description" readonly="state != 'draft'"/>
                     </group>
                 </sheet>
+
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
                     <field name="activity_ids"/>

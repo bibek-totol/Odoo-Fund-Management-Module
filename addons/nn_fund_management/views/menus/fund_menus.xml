@@ -1,35 +1,141 @@
 <odoo>
-    <!-- Actions for Audit History -->
+   
     <record id="action_fund_history" model="ir.actions.act_window">
         <field name="name">Audit History</field>
         <field name="res_model">fund.approval.history</field>
         <field name="view_mode">list,form</field>
+        <field name="view_id" ref="nn_audit_history_list"/>
+        <field name="search_view_id" ref="nn_audit_history_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No history found!
+            </p><p>
+                The system records all financial approvals, submissions, and status changes here.
+            </p>
+        </field>
     </record>
 
-    <!-- Main Menu -->
-    <menuitem id="menu_fund_root" name="Fund Management" sequence="10"/>
+    
+    <menuitem
+        id="menu_fund_root"
+        name="Fund Management"
+        web_icon="nn_fund_management,static/description/icon.png"
+        sequence="10"
+        groups="nn_fund_management.group_fund_user,nn_fund_management.group_finance_user,nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver,nn_fund_management.group_fund_admin"/>
 
-    <menuitem id="menu_fund_dashboard" name="Dashboard" parent="menu_fund_root" action="action_fund_dashboard" sequence="1"/>
+    <!-- ── Dashboard ─────────────────────────────────────────────── -->
+    <menuitem
+        id="menu_fund_dashboard"
+        name="Dashboard"
+        parent="menu_fund_root"
+        action="action_fund_dashboard"
+        sequence="5"/>
 
-    <!-- Operations Menu -->
-    <menuitem id="menu_fund_operations" name="Operations" parent="menu_fund_root" sequence="10"/>
-    <menuitem id="menu_fund_incoming" name="Incoming Funds" parent="menu_fund_operations" action="action_fund_incoming" sequence="10"/>
-    <menuitem id="menu_fund_allocation" name="Allocations" parent="menu_fund_operations" action="action_fund_allocation" sequence="20"/>
-    <menuitem id="menu_fund_requisition" name="Requisitions" parent="menu_fund_operations" action="action_fund_requisition" sequence="30"/>
-    <menuitem id="menu_fund_bill" name="Bills" parent="menu_fund_operations" action="action_fund_bill" sequence="40"/>
-    <menuitem id="menu_fund_transfer" name="Transfers" parent="menu_fund_operations" action="action_fund_transfer" sequence="50"/>
+    
+    <menuitem
+        id="menu_fund_operations"
+        name="Operations"
+        parent="menu_fund_root"
+        sequence="10"/>
 
-    <!-- Master Data Menu -->
-    <menuitem id="menu_fund_master_data" name="Master Data" parent="menu_fund_root" sequence="20"/>
-    <menuitem id="menu_fund_account" name="Fund Accounts" parent="menu_fund_master_data" action="action_fund_account" sequence="10"/>
-    <menuitem id="menu_fund_project" name="Projects" parent="menu_fund_master_data" action="action_fund_project" sequence="20"/>
-    <menuitem id="menu_fund_expense_head" name="Expense Heads" parent="menu_fund_master_data" action="action_fund_expense_head" sequence="30"/>
+    <menuitem
+        id="menu_fund_incoming"
+        name="Incoming Funds"
+        parent="menu_fund_operations"
+        action="action_fund_incoming"
+        sequence="10"
+        groups="nn_fund_management.group_finance_user,nn_fund_management.group_fund_admin"/>
 
-    <!-- Reporting Menu -->
-    <menuitem id="menu_fund_reporting" name="Reporting" parent="menu_fund_root" sequence="30"/>
-    <menuitem id="menu_fund_history" name="Audit History" parent="menu_fund_reporting" action="action_fund_history" sequence="10"/>
+    <menuitem
+        id="menu_fund_allocation"
+        name="Allocations"
+        parent="menu_fund_operations"
+        action="action_fund_allocation"
+        sequence="20"/>
 
-    <!-- Configuration Menu -->
-    <menuitem id="menu_fund_config" name="Configuration" parent="menu_fund_root" sequence="90"/>
-    <menuitem id="menu_fund_approval_config" name="Approval Settings" parent="menu_fund_config" action="action_fund_approval_config" sequence="10"/>
+    <menuitem
+        id="menu_fund_requisition"
+        name="Requisitions"
+        parent="menu_fund_operations"
+        action="action_fund_requisition"
+        sequence="30"/>
+
+    <menuitem
+        id="menu_fund_bill"
+        name="Bills"
+        parent="menu_fund_operations"
+        action="action_fund_bill"
+        sequence="40"
+        groups="nn_fund_management.group_finance_user,nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_transfer"
+        name="Transfers"
+        parent="menu_fund_operations"
+        action="action_fund_transfer"
+        sequence="50"/>
+
+   
+    <menuitem
+        id="menu_fund_master_data"
+        name="Master Data"
+        parent="menu_fund_root"
+        sequence="20"
+        groups="nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_account"
+        name="Fund Accounts"
+        parent="menu_fund_master_data"
+        action="action_fund_account"
+        sequence="10"
+        groups="nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_project"
+        name="Projects"
+        parent="menu_fund_master_data"
+        action="action_fund_project"
+        sequence="20"
+        groups="nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_expense_head"
+        name="Expense Heads"
+        parent="menu_fund_master_data"
+        action="action_fund_expense_head"
+        sequence="30"
+        groups="nn_fund_management.group_fund_admin"/>
+
+    
+    <menuitem
+        id="menu_fund_reporting"
+        name="Reporting"
+        parent="menu_fund_root"
+        sequence="30"
+        groups="nn_fund_management.group_finance_user,nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver,nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_history"
+        name="Audit History"
+        parent="menu_fund_reporting"
+        action="action_fund_history"
+        sequence="10"
+        groups="nn_fund_management.group_finance_user,nn_fund_management.group_gm_approver,nn_fund_management.group_md_approver,nn_fund_management.group_fund_admin"/>
+
+   
+    <menuitem
+        id="menu_fund_config"
+        name="Configuration"
+        parent="menu_fund_root"
+        sequence="90"
+        groups="nn_fund_management.group_fund_admin"/>
+
+    <menuitem
+        id="menu_fund_approval_config"
+        name="Approval Settings"
+        parent="menu_fund_config"
+        action="action_fund_approval_config"
+        sequence="10"
+        groups="nn_fund_management.group_fund_admin"/>
 </odoo>

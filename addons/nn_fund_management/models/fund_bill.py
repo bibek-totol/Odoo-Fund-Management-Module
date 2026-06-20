@@ -42,13 +42,15 @@ class FundBill(models.Model):
         ('amount_positive', 'CHECK(amount > 0)', 'Bill amount must be greater than zero.'),
     ]
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('fund.bill') or 'New'
-        rec = super().create(vals)
-        rec._check_requisition_company()
-        return rec
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('fund.bill') or 'New'
+        recs = super().create(vals_list)
+        for rec in recs:
+            rec._check_requisition_company()
+        return recs
 
     def write(self, vals):
         if not self.env.context.get('fund_internal_write'):
@@ -78,7 +80,7 @@ class FundBill(models.Model):
                 raise ValidationError(_('Bill company must match the requisition company.'))
 
     def _check_finance_user(self):
-        if not self.user_has_groups('nn_fund_management.group_finance_user') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+        if not self.env.user.has_group('nn_fund_management.group_finance_user') and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
             raise UserError(_('Only authorized Finance Users can post, pay, or cancel bills.'))
 
     def _lock_requisition_balance(self):

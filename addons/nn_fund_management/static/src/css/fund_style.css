@@ -1,0 +1,38 @@
+
+@media (min-width: 1200px) {
+    .o_form_view .o_form_sheet_bg {
+        padding: 24px;
+    }
+    
+    .o_form_view .o_form_sheet {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        max-width: 1200px !important;
+        width: 100% !important;
+        min-width: auto !important;
+        display: block !important;
+        float: none !important;
+    }
+
+  
+    .o_form_statusbar {
+        justify-content: center !important;
+    }
+    
+    .o_form_statusbar > .o_statusbar_buttons,
+    .o_form_statusbar > .o_field_widget {
+         max-width: 1200px;
+         width: 100%;
+         margin: 0 auto;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+    }
+}
+
+
+.oe_chatter {
+    max-width: 1200px !important;
+    margin: 20px auto !important;
+    width: 100% !important;
+}

@@ -22,30 +22,36 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+
                     <group>
-                        <group>
-                            <field name="name"/>
+                        <group string="Account Details">
                             <field name="account_type"/>
                             <field name="account_number"/>
+                            <field name="currency_id" readonly="1"/>
                         </group>
-                        <group>
+                        <group string="Company">
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
+
+                    <group string="Balance Summary">
+                        <group>
+                            <field name="total_received" readonly="1"/>
+                            <field name="held_balance" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="available_balance" readonly="1"/>
+                            <field name="assigned_balance" readonly="1"/>
+                        </group>
+                    </group>
+
                     <notebook>
-                        <page string="Balances">
-                            <group>
-                                <group string="Summary">
-                                    <field name="total_received" readonly="1"/>
-                                    <field name="available_balance" readonly="1"/>
-                                    <field name="held_balance" readonly="1"/>
-                                    <field name="assigned_balance" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
                         <page string="Incoming Funds">
                             <field name="incoming_funds">
-                                <list>
+                                <list create="false">
                                     <field name="name"/>
                                     <field name="amount"/>
                                     <field name="state"/>
@@ -55,7 +61,7 @@
                         </page>
                         <page string="Allocations">
                             <field name="allocation_ids">
-                                <list>
+                                <list create="false">
                                     <field name="name"/>
                                     <field name="amount"/>
                                     <field name="state"/>

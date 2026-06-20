@@ -111,8 +111,8 @@ class FundProject(models.Model):
                 raise ValidationError(_('Project code must be unique per company.'))
 
     def _ensure_admin_for_master_change(self):
-        if not self.user_has_groups('nn_fund_management.group_fund_admin'):
-            raise UserError(_('Only Fund Administrators can change project status.'))
+        if not self.env.user.has_group('nn_fund_management.group_fund_admin'):
+            raise UserError(_('Only Fund Administrators can perform this action.'))
 
     def action_open(self):
         self._ensure_admin_for_master_change()

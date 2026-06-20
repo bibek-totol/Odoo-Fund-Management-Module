@@ -7,14 +7,14 @@ class FundDashboard(models.TransientModel):
 
     currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
     
-    # KPIs
+  
     total_received = fields.Float(string='Total Received')
     unassigned_balance = fields.Float(string='Unassigned Balance')
     held_amount = fields.Float(string='Held Amount')
     assigned_amount = fields.Float(string='Assigned Amount')
     spent_amount = fields.Float(string='Spent Amount')
     
-    # Dynamic Lists (Using existing models)
+    
     pending_approval_count = fields.Integer(string='Pending Approvals', compute='_compute_lists')
     project_ids = fields.Many2many(
         'fund.project', string='Project Balances',
@@ -71,7 +71,7 @@ class FundDashboard(models.TransientModel):
 
     def _compute_lists(self):
         for rec in self:
-            # Count anything in 'submitted' or 'gm_approved' state
+           
             alloc_count = self.env['fund.allocation'].search_count([('state', 'in', ('submitted', 'gm_approved'))])
             req_count = self.env['fund.requisition'].search_count([('state', 'in', ('submitted', 'gm_approved'))])
             trans_count = self.env['fund.transfer'].search_count([('state', 'in', ('submitted', 'gm_approved'))])

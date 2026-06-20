@@ -131,7 +131,7 @@ class FundApprovalMixin(models.AbstractModel):
 
     def _check_current_user_is_requester_or_admin(self):
         self.ensure_one()
-        if self.user_has_groups('nn_fund_management.group_fund_admin'):
+        if self.env.user.has_group('nn_fund_management.group_fund_admin'):
             return
         if self.requested_by != self.env.user:
             raise UserError(_('Only the requester or a Fund Administrator can perform this action.'))
@@ -141,7 +141,7 @@ class FundApprovalMixin(models.AbstractModel):
             return
         if 'state' in vals:
             raise UserError(_('Status changes must use the workflow buttons.'))
-        if 'requested_by' in vals and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+        if 'requested_by' in vals and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
             raise UserError(_('Only Fund Administrators can change the requester.'))
         changed = set(vals) & set(protected_fields)
         if not changed:
@@ -153,7 +153,7 @@ class FundApprovalMixin(models.AbstractModel):
                 ))
 
     def _normalize_requested_by_vals(self, vals):
-        if not self.user_has_groups('nn_fund_management.group_fund_admin') or not vals.get('requested_by'):
+        if not self.env.user.has_group('nn_fund_management.group_fund_admin') or not vals.get('requested_by'):
             vals['requested_by'] = self.env.user.id
         return vals
 
@@ -182,16 +182,28 @@ class FundApprovalMixin(models.AbstractModel):
                 ) % (doc_label, rec.requested_by.name, getattr(rec, 'amount', '')),
             )
 
+           
+            config = rec._get_approval_config()
+            doc_label = rec._description or rec._name
+            rec._notify_approver(
+                config.gm_approver_id,
+                summary=_('Approval Required: %s') % rec.name,
+                note=_(
+                    '<b>%s</b> requires your GM approval.<br/>'
+                    'Submitted by: %s<br/>Amount: %s'
+                ) % (doc_label, rec.requested_by.name, getattr(rec, 'amount', '')),
+            )
+
     def action_gm_approve(self):
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted records can be GM-approved.'))
 
-            if not self.user_has_groups('nn_fund_management.group_gm_approver') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if not self.env.user.has_group('nn_fund_management.group_gm_approver') and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only users in the GM Approver group can approve at this level.'))
 
             config = rec._get_approval_config()
-            if self.env.user != config.gm_approver_id and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if self.env.user != config.gm_approver_id and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('You are not the assigned GM approver.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot approve your own request.'))
@@ -221,11 +233,11 @@ class FundApprovalMixin(models.AbstractModel):
             if rec.state != 'gm_approved':
                 raise UserError(_('GM approval must be completed before MD approval.'))
 
-            if not self.user_has_groups('nn_fund_management.group_md_approver') and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if not self.env.user.has_group('nn_fund_management.group_md_approver') and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only users in the MD Approver group can approve at this level.'))
 
             config = rec._get_approval_config()
-            if self.env.user != config.md_approver_id and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if self.env.user != config.md_approver_id and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('You are not the assigned MD approver.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot approve your own request.'))
@@ -255,9 +267,9 @@ class FundApprovalMixin(models.AbstractModel):
                 level, approver = 'md', config.md_approver_id
                 group_xmlid = 'nn_fund_management.group_md_approver'
 
-            if not self.user_has_groups(group_xmlid) and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if not self.env.user.has_group(group_xmlid) and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('You are not allowed to reject at this approval level.'))
-            if self.env.user != approver and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if self.env.user != approver and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only the current-level approver can reject.'))
             if not config.allow_self_approval and rec.requested_by == self.env.user:
                 raise UserError(_('You cannot reject your own request.'))
@@ -284,7 +296,7 @@ class FundApprovalMixin(models.AbstractModel):
             if rec.state not in ('draft', 'submitted', 'gm_approved', 'approved'):
                 raise UserError(_('Only draft, pending, or approved records can be cancelled.'))
 
-            if rec.state == 'approved' and not self.user_has_groups('nn_fund_management.group_fund_admin'):
+            if rec.state == 'approved' and not self.env.user.has_group('nn_fund_management.group_fund_admin'):
                 raise UserError(_('Only Fund Administrators can cancel approved transactions.'))
             if rec.state != 'approved':
                 rec._check_current_user_is_requester_or_admin()

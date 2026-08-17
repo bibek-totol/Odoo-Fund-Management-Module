@@ -1,3 +1,4 @@
+## Demo: https://youtu.be/C7TT_5NeUxg?si=wVlMOXBwCz-GmhVJ
 # Odoo Fund Management Module
 
 [![Odoo Version](https://img.shields.io/badge/Odoo-19.0-purple.svg)](https://www.odoo.com/)
